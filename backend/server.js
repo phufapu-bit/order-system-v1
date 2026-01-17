@@ -53,8 +53,11 @@ const db = mysql.createPool({
 const storage = new CloudinaryStorage({
   cloudinary,
   params: {
-    folder: "menus", // ชื่อโฟลเดอร์ใน Cloudinary
-    allowed_formats: ["jpg", "png", "jpeg", "webp"],
+    folder: "menus",
+    resource_type: "image",
+    format: async (req, file) => "jpg", // หรือไม่ใส่ก็ได้
+    public_id: (req, file) =>
+      Date.now() + "-" + file.originalname.split(".")[0],
   },
 });
 
@@ -941,8 +944,7 @@ app.post("/api/getmenu", async (req, res) => {
 app.post("/api/addmenu", upload.single("image"), async (req, res) => {
   const { menuname, price } = req.body;
 
-  console.log("req.file =", JSON.stringify(req.file, null, 2));
-
+  console.log("req.file =", req.file);
 
   if (!menuname || !price) {
     return res.status(400).json({ message: "menuname and price required" });
@@ -952,11 +954,11 @@ app.post("/api/addmenu", upload.single("image"), async (req, res) => {
     return res.status(400).json({ message: "image required" });
   }
 
-  const image = req.file?.path || req.file?.secure_url; // ✅ ตรงนี้สำคัญมาก
+  const image = req.file.path; // ✅ Cloudinary URL
 
   try {
     const [maxIdResult] = await db.query(
-      "SELECT MAX(id) AS max_id FROM test.masterorder"
+      "SELECT MAX(id) AS max_id FROM test.masterorder",
     );
 
     const newId = (maxIdResult[0].max_id || 0) + 1;
@@ -965,17 +967,15 @@ app.post("/api/addmenu", upload.single("image"), async (req, res) => {
       `INSERT INTO test.masterorder
        (id, ordername, price, image, create_at, update_at)
        VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP())`,
-      [newId, menuname, price, image]
+      [newId, menuname, price, image],
     );
 
-    res.json({ success: true });
+    res.json({ success: true, image });
   } catch (err) {
-    console.error("❌ Query error:", err);
-    res.status(500).json({ success: false, message: "Database error" });
+    console.error(err);
+    res.status(500).json({ message: "Database error" });
   }
 });
-
-
 
 //////////////////local host//////////////////
 // app.post("/api/addmenu", async (req, res) => {
