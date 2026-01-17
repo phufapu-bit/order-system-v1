@@ -23,7 +23,7 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
 
-app.use("/uploads", express.static("uploads"));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // // Database connection using async/await
 // const db = mysql.createPool({
@@ -45,7 +45,7 @@ const db = mysql.createPool({
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/");
+    cb(null, "uploadDir");
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + path.extname(file.originalname));
@@ -975,7 +975,7 @@ app.post("/api/addmenu", upload.single("image"), async (req, res) => {
     return res.status(400).json({ message: "menuname and price required" });
   }
 
-  const image = `/uploads/${req.file.filename}`;
+  const image = req.file.filename;
 
   try {
     const [maxIdResult] = await db.query(
@@ -1023,33 +1023,56 @@ app.post("/api/addmenu", upload.single("image"), async (req, res) => {
 
 //---
 //////////////////////TiDB data base//////////////////////
+// app.patch("/api/updatemenu", upload.single("image"), async (req, res) => {
+//   const { id, menuname, price } = req.body;
+//   if (!id || !menuname || !price) {
+//     return res.status(400).json({
+//       success: false,
+//       message: "id, menuname, price and image required",
+//     });
+//   }
+
+//   let imagePath = req.body.image;
+
+//   if (req.file) {
+//     imagePath = `/uploads/${req.file.filename}`; // มีไฟล์ใหม่
+//   }
+
+//   try {
+//     await db.query(
+//       `UPDATE test.masterorder
+//        SET ordername = ?, price = ?, image = ?, update_at = CURRENT_TIMESTAMP()
+//        WHERE id = ?`,
+//       [menuname, price, imagePath, id],
+//     );
+
+//     res.json({ success: true });
+//   } catch (err) {
+//     console.error("Update error:", err);
+//     res.status(500).json({ message: "Database error" });
+//   }
+// });
+
 app.patch("/api/updatemenu", upload.single("image"), async (req, res) => {
-  const { id, menuname, price } = req.body;
-  if (!id || !menuname || !price) {
-    return res.status(400).json({
-      success: false,
-      message: "id, menuname, price and image required",
-    });
-  }
-
-  let imagePath = req.body.image;
-
-  if (req.file) {
-    imagePath = `/uploads/${req.file.filename}`; // มีไฟล์ใหม่
-  }
-
   try {
+    const { id, menuname, price, image_old } = req.body;
+
+    let image = image_old;
+    if (req.file) {
+      image = req.file.filename; // 🔥 รูปใหม่
+    }
+
     await db.query(
       `UPDATE test.masterorder
-       SET ordername = ?, price = ?, image = ?, update_at = CURRENT_TIMESTAMP()
-       WHERE id = ?`,
-      [menuname, price, imagePath, id],
+       SET ordername=?, price=?, image=?, update_at=CURRENT_TIMESTAMP()
+       WHERE id=?`,
+      [menuname, price, image, id],
     );
 
     res.json({ success: true });
   } catch (err) {
-    console.error("Update error:", err);
-    res.status(500).json({ message: "Database error" });
+    console.error(err);
+    res.status(500).json({ success: false });
   }
 });
 

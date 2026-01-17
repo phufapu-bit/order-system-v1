@@ -39,15 +39,15 @@ export default function Menupage() {
     }
   };
 
-  const handleUpload = async () => {
-    const formData = new FormData();
-    formData.append("image", image); // image = file ที่เลือกจาก input
-    // ("http://localhost:3001/upload");
-    const res = await axios.post(`${API_URL}/upload`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-    // return res.data.image;
-  };
+  // const handleUpload = async () => {
+  //   const formData = new FormData();
+  //   formData.append("image", image); // image = file ที่เลือกจาก input
+  //   // ("http://localhost:3001/upload");
+  //   const res = await axios.post(`${API_URL}/upload`, formData,
+  //     { headers: { "Content-Type": "multipart/form-data" } }
+  //   );
+  //   // return res.data.image;
+  // };
 
   // ฟังก์เพิ่มเมนู
   const handleAddMenu = async () => {
@@ -62,9 +62,11 @@ export default function Menupage() {
       const formData = new FormData();
       formData.append("menuname", menuname);
       formData.append("price", price);
-      formData.append("image", image); // ✅ ส่งไฟล์จริง
+      formData.append("image", image); // 🔥 ส่งไฟล์จริง
 
-      await axios.post(`${API_URL}/addmenu`, formData);
+      await axios.post(`${API_URL}/addmenu`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
       Swal.fire({
         icon: "success",
@@ -76,6 +78,7 @@ export default function Menupage() {
       getMenuList();
       resetForm();
     } catch (error) {
+      console.error(error);
       Swal.fire({
         icon: "error",
         title: "เกิดข้อผิดพลาด",
@@ -128,14 +131,14 @@ export default function Menupage() {
       formData.append("price", price);
 
       if (image instanceof File) {
-        // 🔥 ส่งไฟล์จริง
-        formData.append("image", image);
+        formData.append("image", image); // 🔥 ไฟล์ใหม่
       } else {
-        // 🔥 ส่ง path เดิม
-        formData.append("image", image);
+        formData.append("image_old", image); // 🔥 ชื่อไฟล์เดิม
       }
 
-      await axios.patch(`${API_URL}/updatemenu`, formData);
+      await axios.patch(`${API_URL}/updatemenu`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
       Swal.fire({
         icon: "success",
@@ -147,6 +150,7 @@ export default function Menupage() {
       getMenuList();
       resetForm();
     } catch (error) {
+      console.error(error);
       Swal.fire({
         icon: "error",
         title: "เกิดข้อผิดพลาด",
@@ -459,7 +463,7 @@ export default function Menupage() {
                     {/* `${API_URL}/uploads/${menu.image}` */}
                     {/* `http://localhost:3001/uploads/${menu.image}` */}
                     <img
-                      src={`${API_URL}/uploads`}
+                      src={`${API_URL}/uploads/${menu.image}`}
                       alt={menu.ordername}
                       className="card-img-top"
                       style={{
