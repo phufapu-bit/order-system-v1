@@ -45,7 +45,9 @@ const storage = new CloudinaryStorage({
   },
 });
 
-const upload = multer({ storage });
+const upload = multer({
+  storage: multer.memoryStorage(),
+});
 
 // const REMOVE_BG_API = "q8V1NnscArhuwznDPoMFeFWc";
 // const REMOVE_BG_API = process.env.REMOVE_BG_API;
