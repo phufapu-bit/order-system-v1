@@ -352,7 +352,8 @@ export default function Menupage() {
                   src={
                     image instanceof File
                       ? URL.createObjectURL(image)
-                      : `${API_URL}${image}`
+                      // : `${API_URL}${image}`
+                      :`https://order-system-v1.onrender.com/uploads/${image}`
                   }
                   alt="old"
                   style={{
@@ -463,7 +464,8 @@ export default function Menupage() {
                     {/* `${API_URL}/uploads/${menu.image}` */}
                     {/* `http://localhost:3001/uploads/${menu.image}` */}
                     <img
-                      src={`${API_URL}${menu.image}`}
+                      // src={`${API_URL}${menu.image}`}
+                      src={`https://order-system-v1.onrender.com/uploads/${menu.image}`}
                       alt={menu.ordername}
                       className="card-img-top"
                       style={{
