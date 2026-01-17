@@ -43,8 +43,10 @@ export default function Menupage() {
     const formData = new FormData();
     formData.append("image", image); // image = file ที่เลือกจาก input
     // ("http://localhost:3001/upload");
-    const res = await axios.post(`${API_URL}/upload`, formData);
-    return res.data.image;
+    const res = await axios.post(`${API_URL}/upload`, formData,
+      { headers: { "Content-Type": "multipart/form-data" } }
+    );
+    // return res.data.image;
   };
 
   // ฟังก์เพิ่มเมนู
