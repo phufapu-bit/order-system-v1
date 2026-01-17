@@ -348,7 +348,7 @@ export default function Menupage() {
                   src={
                     image instanceof File
                       ? URL.createObjectURL(image)
-                      : `${API_URL}/uploads/${image}`
+                      : `${API_URL}${image}`
                   }
                   alt="old"
                   style={{
