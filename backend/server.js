@@ -12,6 +12,7 @@ const path = require("path");
 const cloudinary = require("cloudinary").v2;
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 require("dotenv").config();
+const streamifier = require("streamifier");
 
 const app = express();
 // const PORT = 3001;
@@ -19,6 +20,20 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+const uploadToCloudinary = (buffer) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: "menus" },
+      (error, result) => {
+        if (result) resolve(result);
+        else reject(error);
+      },
+    );
+
+    streamifier.createReadStream(buffer).pipe(stream);
+  });
+};
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -67,16 +82,24 @@ const upload = multer({
   }
 })();
 
-app.post("/api/upload", upload.single("image"), (req, res) => {
+app.post("/api/upload", upload.single("image"), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: "Image required" });
   }
 
-  res.json({
-    success: true,
-    imageUrl: req.file.path, // 🔥 URL เต็มจาก Cloudinary
-  });
+  try {
+    const result = await uploadToCloudinary(req.file.buffer);
+
+    res.json({
+      success: true,
+      imageUrl: result.secure_url, // ✅ URL จริง
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Upload failed" });
+  }
 });
+
 
 //---
 // TiDB data base
@@ -550,8 +573,6 @@ app.post("/api/getmenu", async (req, res) => {
 app.post("/api/addmenu", upload.single("image"), async (req, res) => {
   const { menuname, price } = req.body;
 
-  // console.log("req.file =", req.file);
-
   if (!menuname || !price) {
     return res.status(400).json({ message: "menuname and price required" });
   }
@@ -560,9 +581,11 @@ app.post("/api/addmenu", upload.single("image"), async (req, res) => {
     return res.status(400).json({ message: "image required" });
   }
 
-  const image = req.file.path; // ✅ Cloudinary URL
-
   try {
+    // 🔥 upload ขึ้น Cloudinary ก่อน
+    const result = await uploadToCloudinary(req.file.buffer);
+    const image = result.secure_url;
+
     const [maxIdResult] = await db.query(
       "SELECT MAX(id) AS max_id FROM test.masterorder",
     );
@@ -578,8 +601,8 @@ app.post("/api/addmenu", upload.single("image"), async (req, res) => {
 
     res.json({ success: true, image });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Database error" });
+    console.error("❌ addmenu error:", err);
+    res.status(500).json({ message: "Database or upload error" });
   }
 });
 
@@ -587,14 +610,18 @@ app.patch("/api/updatemenu", upload.single("image"), async (req, res) => {
   try {
     const { id, menuname, price, image_old } = req.body;
 
-    // ถ้ามีรูปใหม่ → ใช้ของ cloudinary
-    const image = req.file ? req.file.path : image_old;
+    let image = image_old;
+
+    if (req.file) {
+      const result = await uploadToCloudinary(req.file.buffer);
+      image = result.secure_url;
+    }
 
     await db.query(
       `UPDATE test.masterorder
        SET ordername=?, price=?, image=?, update_at=CURRENT_TIMESTAMP()
        WHERE id=?`,
-      [menuname, price, image, id],
+      [menuname, price, image, id]
     );
 
     res.json({ success: true, image });
@@ -603,6 +630,7 @@ app.patch("/api/updatemenu", upload.single("image"), async (req, res) => {
     res.status(500).json({ success: false });
   }
 });
+
 
 //---
 ///////////////////////////TiDB data base//////////////////////////////
