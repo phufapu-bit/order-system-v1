@@ -966,26 +966,30 @@ app.post("/api/getmenu", async (req, res) => {
 //////////////////////TiDB database////////////////
 app.post("/api/addmenu", upload.single("image"), async (req, res) => {
   const { menuname, price } = req.body;
-  const image = req.file ? req.file.path : null;
-
-  if (!menuname || !price || !image) {
-    return res
-      .status(400)
-      .json({ success: false, message: "menuname, price and image required" });
+  if (!req.file) {
+    return res.status(400).json({ message: "Image required" });
   }
+
+  if (!menuname || !price) {
+    return res.status(400).json({ message: "menuname and price required" });
+  }
+
+  const image = `/uploads/${req.file.filename}`;
+
   try {
     const [maxIdResult] = await db.query(
       "SELECT MAX(id) AS max_id FROM test.masterorder",
     );
     const newId = (maxIdResult[0].max_id || 0) + 1;
 
-    const sql =
-      "INSERT INTO test.masterorder (id, ordername, price,image, create_at, update_at) VALUES (?, ?, ?,?, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP())";
-    const [results] = await db.query(sql, [newId, menuname, price, image]);
+    await db.query(
+      `INSERT INTO test.masterorder 
+       (id, ordername, price, image, create_at, update_at)
+       VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP())`,
+      [newId, menuname, price, image],
+    );
     res.json({
       success: true,
-      message: "Menu added successfully",
-      orderId: results.insertId,
     });
   } catch (err) {
     console.error("❌ Query error:", err);
