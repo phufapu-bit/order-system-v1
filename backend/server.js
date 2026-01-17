@@ -30,8 +30,8 @@ const uploadToCloudinary = (buffer) => {
     const stream = cloudinary.uploader.upload_stream(
       {
         folder: "menus",
-        width: 500,
-        height: 500,
+        width: 400,
+        height: 400,
         crop: "fill",
         gravity: "center",
         quality: "auto",
