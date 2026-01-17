@@ -28,7 +28,16 @@ const upload = multer({
 const uploadToCloudinary = (buffer) => {
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
-      { folder: "menus" },
+      {
+        folder: "menus",
+        width: 500,
+        height: 500,
+        crop: "fill",
+        gravity: "center",
+        quality: "auto",
+        fetch_format: "auto",
+        // background_removal: "cloudinary_ai",
+      },
       (error, result) => {
         if (error) reject(error);
         else resolve(result);
