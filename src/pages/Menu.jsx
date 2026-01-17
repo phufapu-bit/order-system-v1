@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
 import axios from "axios";
 import "../App.css";
+import LoadingOverlay from "../components/LoadingOverlay";
 
 export default function Menupage() {
   const [menuname, setMenuname] = useState("");
@@ -14,6 +15,7 @@ export default function Menupage() {
   const [id, setId] = useState(null);
   const [image, setImage] = useState(null);
   const [showImageModal, setShowImageModal] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const fileInputRef = useRef(null);
   const nameInputRef = useRef(null);
@@ -59,6 +61,8 @@ export default function Menupage() {
         });
       }
 
+      setLoading(true);
+
       const formData = new FormData();
       formData.append("menuname", menuname);
       formData.append("price", price);
@@ -81,6 +85,8 @@ export default function Menupage() {
         icon: "error",
         title: "เกิดข้อผิดพลาด",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -122,6 +128,8 @@ export default function Menupage() {
 
     if (!result.isConfirmed) return;
 
+    setLoading(true);
+
     try {
       const formData = new FormData();
       formData.append("id", id);
@@ -153,6 +161,8 @@ export default function Menupage() {
         icon: "error",
         title: "เกิดข้อผิดพลาด",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -351,7 +361,7 @@ export default function Menupage() {
                     // image instanceof File
                     //   ? URL.createObjectURL(image)
                     //   : // : `${API_URL}${image}`
-                        image
+                    image
                   }
                   alt="old"
                   style={{
@@ -369,26 +379,32 @@ export default function Menupage() {
               <div className="col-md-6 d-flex gap-3">
                 {isEditing ? (
                   <>
+                    {loading && <LoadingOverlay />}
                     <button
                       className="btn btn-warning w-50"
                       onClick={handleUpdate}
+                      disabled={loading}
                     >
-                      อัปเดตเมนู
+                      {loading ? "กำลังอัปเดต..." : "อัปเดตเมนู"}
                     </button>
                     <button
                       className="btn btn-secondary w-50"
                       onClick={handleCancelEdit}
+                      disabled={loading}
                     >
                       ยกเลิก
                     </button>
                   </>
                 ) : (
-                  <button
-                    className="btn btn-success w-100"
-                    onClick={handleAddMenu}
-                  >
-                    บันทึกเมนู
-                  </button>
+                  <>
+                    {loading && <LoadingOverlay />}
+                    <button
+                      className="btn btn-success w-100"
+                      onClick={handleAddMenu}
+                    >
+                      บันทึกเมนู
+                    </button>
+                  </>
                 )}
               </div>
 
