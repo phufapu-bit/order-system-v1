@@ -352,7 +352,7 @@ export default function Menupage() {
                   src={
                     image instanceof File
                       ? URL.createObjectURL(image)
-                      : `${API_URL}/uploads/${image}`
+                      : `${API_URL}${image}`
                   }
                   alt="old"
                   style={{
@@ -463,7 +463,7 @@ export default function Menupage() {
                     {/* `${API_URL}/uploads/${menu.image}` */}
                     {/* `http://localhost:3001/uploads/${menu.image}` */}
                     <img
-                      src={`${API_URL}/uploads/${menu.image}`}
+                      src={`${API_URL}${menu.image}`}
                       alt={menu.ordername}
                       className="card-img-top"
                       style={{
