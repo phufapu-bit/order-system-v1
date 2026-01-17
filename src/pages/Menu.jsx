@@ -353,7 +353,7 @@ export default function Menupage() {
                     image instanceof File
                       ? URL.createObjectURL(image)
                       // : `${API_URL}${image}`
-                      :`https://order-system-v1.onrender.com/${image}`
+                      :`https://order-system-v1.onrender.com${image}`
                   }
                   alt="old"
                   style={{
@@ -465,7 +465,7 @@ export default function Menupage() {
                     {/* `http://localhost:3001/uploads/${menu.image}` */}
                     <img
                       // src={`${API_URL}${menu.image}`}
-                      src={`https://order-system-v1.onrender.com/${menu.image}`}
+                      src={`https://order-system-v1.onrender.com${menu.image}`}
                       alt={menu.ordername}
                       className="card-img-top"
                       style={{
