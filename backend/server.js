@@ -10,6 +10,11 @@ const saltRounds = 10;
 const multer = require("multer");
 const path = require("path");
 const cloudinary = require("cloudinary").v2;
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 require("dotenv").config();
 
@@ -935,31 +940,39 @@ app.post("/api/getmenu", async (req, res) => {
 //---
 //////////////////////TiDB database////////////////
 app.post("/api/addmenu", upload.single("image"), async (req, res) => {
-  const { menuname, price } = req.body;
-  const image = req.file?.path;
-
-  if (!menuname || !price) {
-    return res.status(400).json({ message: "menuname and price required" });
-  }
-
   try {
+    const { menuname, price } = req.body;
+
+    if (!menuname || !price || !req.file) {
+      return res
+        .status(400)
+        .json({ message: "menuname, price, image required" });
+    }
+
+    // 🔥 upload ขึ้น Cloudinary
+    const result = await cloudinary.uploader.upload(
+      `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`,
+      { folder: "menus" },
+    );
+
+    const imageUrl = result.secure_url;
+
     const [maxIdResult] = await db.query(
       "SELECT MAX(id) AS max_id FROM test.masterorder",
     );
     const newId = (maxIdResult[0].max_id || 0) + 1;
 
     await db.query(
-      `INSERT INTO test.masterorder 
+      `INSERT INTO test.masterorder
        (id, ordername, price, image, create_at, update_at)
-       VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP())`,
-      [newId, menuname, price, image],
+       VALUES (?, ?, ?, ?, NOW(), NOW())`,
+      [newId, menuname, price, imageUrl],
     );
-    res.json({
-      success: true,
-    });
+
+    res.json({ success: true, image: imageUrl });
   } catch (err) {
-    console.error("❌ Query error:", err);
-    res.status(500).json({ success: false, message: "Database error" });
+    console.error("❌ Add menu error:", err);
+    res.status(500).json({ success: false });
   }
 });
 
