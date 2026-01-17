@@ -468,7 +468,7 @@ export default function Menupage() {
                       className="card-img-top"
                       style={{
                         width: "100%",
-                        height: "200px",
+                        height: "100px",
                         objectFit: "contain",
                         background: "#fafafa",
                         boxShadow: "0 4px 10px rgba(0,0,0,0.10)",
