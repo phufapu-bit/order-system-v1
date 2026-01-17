@@ -9,21 +9,24 @@ const bcrypt = require("bcrypt");
 const saltRounds = 10;
 const multer = require("multer");
 const path = require("path");
+const cloudinary = require("cloudinary").v2;
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+require("dotenv").config();
 
 const app = express();
 // const PORT = 3001;
 const PORT = process.env.PORT || 3001;
 
 app.use(cors());
-app.use(bodyParser.json());
+// app.use(bodyParser.json());
 
-const uploadDir = path.join(__dirname, "uploads");
+// const uploadDir = path.join(__dirname, "uploads");
 
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
-}
+// if (!fs.existsSync(uploadDir)) {
+//   fs.mkdirSync(uploadDir);
+// }
 
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // // Database connection using async/await
 // const db = mysql.createPool({
@@ -43,19 +46,18 @@ const db = mysql.createPool({
   database: "test",
 });
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploadDir");
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "menus", // ชื่อโฟลเดอร์ใน Cloudinary
+    allowed_formats: ["jpg", "png", "jpeg", "webp"],
   },
 });
 
 const upload = multer({ storage });
 
 // const REMOVE_BG_API = "q8V1NnscArhuwznDPoMFeFWc";
-const REMOVE_BG_API = process.env.REMOVE_BG_API;
+// const REMOVE_BG_API = process.env.REMOVE_BG_API;
 
 // Start the server only after a successful database connection
 (async function startServer() {
@@ -72,48 +74,15 @@ const REMOVE_BG_API = process.env.REMOVE_BG_API;
   }
 })();
 
-app.post("/api/upload", upload.single("image"), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ message: "No file uploaded" });
-    }
-
-    const inputPath = req.file.path; // รูปต้นฉบับ
-    const outputFilename = `no-bg-${req.file.filename}`;
-    const outputPath = path.join(uploadDir, outputFilename);
-
-    // ส่งรูปเข้า remove.bg API
-    const formData = new FormData();
-    formData.append("size", "auto");
-    formData.append("image_file", fs.createReadStream(inputPath));
-
-    const result = await axios.post(
-      "https://api.remove.bg/v1.0/removebg",
-      formData,
-      {
-        responseType: "arraybuffer",
-        headers: {
-          ...formData.getHeaders(),
-          "X-Api-Key": REMOVE_BG_API,
-        },
-      },
-    );
-
-    // เซฟไฟล์ผลลัพธ์ลงโฟลเดอร์ uploads/
-    fs.writeFileSync(outputPath, result.data);
-
-    // ส่งชื่อไฟล์กลับไปให้ React
-    res.json({
-      success: true,
-      imageUrl: `/uploads/${outputFilename}`,
-    });
-  } catch (error) {
-    console.error(
-      "Remove BG Error:",
-      error.response?.data?.toString() || error.message,
-    );
-    res.status(500).json({ success: false, message: "Remove BG failed" });
+app.post("/api/upload", upload.single("image"), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: "Image required" });
   }
+
+  res.json({
+    success: true,
+    imageUrl: req.file.path, // 🔥 URL เต็มจาก Cloudinary
+  });
 });
 
 //---
@@ -967,15 +936,11 @@ app.post("/api/getmenu", async (req, res) => {
 //////////////////////TiDB database////////////////
 app.post("/api/addmenu", upload.single("image"), async (req, res) => {
   const { menuname, price } = req.body;
-  if (!req.file) {
-    return res.status(400).json({ message: "Image required" });
-  }
+  const image = req.file?.path;
 
   if (!menuname || !price) {
     return res.status(400).json({ message: "menuname and price required" });
   }
-
-  const image = req.file.filename;
 
   try {
     const [maxIdResult] = await db.query(

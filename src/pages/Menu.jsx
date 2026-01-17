@@ -64,9 +64,7 @@ export default function Menupage() {
       formData.append("price", price);
       formData.append("image", image); // 🔥 ส่งไฟล์จริง
 
-      await axios.post(`${API_URL}/addmenu`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      await axios.post(`${API_URL}/addmenu`, formData);
 
       Swal.fire({
         icon: "success",
@@ -352,8 +350,8 @@ export default function Menupage() {
                   src={
                     image instanceof File
                       ? URL.createObjectURL(image)
-                      // : `${API_URL}${image}`
-                      :`https://order-system-v1.onrender.com${image}`
+                      : // : `${API_URL}${image}`
+                        image
                   }
                   alt="old"
                   style={{
@@ -465,7 +463,7 @@ export default function Menupage() {
                     {/* `http://localhost:3001/uploads/${menu.image}` */}
                     <img
                       // src={`${API_URL}${menu.image}`}
-                      src={`https://order-system-v1.onrender.com${menu.image}`}
+                      src={menu.image}
                       alt={menu.ordername}
                       className="card-img-top"
                       style={{
