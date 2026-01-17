@@ -21,7 +21,6 @@ require("dotenv").config();
 const app = express();
 // const PORT = 3001;
 const PORT = process.env.PORT || 3001;
-
 app.use(cors());
 // app.use(bodyParser.json());
 
@@ -939,52 +938,43 @@ app.post("/api/getmenu", async (req, res) => {
 
 //---
 //////////////////////TiDB database////////////////
-// app.post("/api/addmenu", upload.single("image"), async (req, res) => {
-//   console.log("BODY:", req.body);
-//   console.log("FILE:", req.file);
-//   try {
-//     const { menuname, price } = req.body;
-
-//     if (!menuname || !price || !req.file) {
-//       return res
-//         .status(400)
-//         .json({ message: "menuname, price, image required" });
-//     }
-
-//     // 🔥 upload ขึ้น Cloudinary
-//     const result = await cloudinary.uploader.upload(
-//       `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`,
-//       { folder: "menus" },
-//     );
-
-//     const imageUrl = result.secure_url;
-
-//     const [maxIdResult] = await db.query(
-//       "SELECT MAX(id) AS max_id FROM test.masterorder",
-//     );
-//     const newId = (maxIdResult[0].max_id || 0) + 1;
-
-//     await db.query(
-//       `INSERT INTO test.masterorder
-//        (id, ordername, price, image, create_at, update_at)
-//        VALUES (?, ?, ?, ?, NOW(), NOW())`,
-//       [newId, menuname, price, imageUrl],
-//     );
-
-//     res.json({ success: true, image: imageUrl });
-//   } catch (err) {
-//     console.error("❌ Add menu error:", err);
-//     res.status(500).json({ success: false });
-//   }
-// });
-
 app.post("/api/addmenu", upload.single("image"), async (req, res) => {
-  console.log("=== ADD MENU ===");
-  console.log("BODY:", req.body);
+  const { menuname, price } = req.body;
+
   console.log("FILE:", req.file);
 
-  return res.json({ test: true });
+  if (!menuname || !price) {
+    return res.status(400).json({ message: "menuname and price required" });
+  }
+
+  if (!req.file) {
+    return res.status(400).json({ message: "image required" });
+  }
+
+  const image = req.file.secure_url; // ✅ ตรงนี้สำคัญมาก
+
+  try {
+    const [maxIdResult] = await db.query(
+      "SELECT MAX(id) AS max_id FROM test.masterorder"
+    );
+
+    const newId = (maxIdResult[0].max_id || 0) + 1;
+
+    await db.query(
+      `INSERT INTO test.masterorder
+       (id, ordername, price, image, create_at, update_at)
+       VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP())`,
+      [newId, menuname, price, image]
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("❌ Query error:", err);
+    res.status(500).json({ success: false, message: "Database error" });
+  }
 });
+
+
 
 //////////////////local host//////////////////
 // app.post("/api/addmenu", async (req, res) => {
