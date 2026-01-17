@@ -55,6 +55,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // const REMOVE_BG_API = "q8V1NnscArhuwznDPoMFeFWc";
+const REMOVE_BG_API = process.env.REMOVE_BG_API;
 
 // Start the server only after a successful database connection
 (async function startServer() {
@@ -93,7 +94,7 @@ app.post("/api/upload", upload.single("image"), async (req, res) => {
         responseType: "arraybuffer",
         headers: {
           ...formData.getHeaders(),
-          "X-Api-Key": process.env.REMOVE_BG_API,
+          "X-Api-Key": REMOVE_BG_API,
         },
       },
     );
