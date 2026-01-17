@@ -16,7 +16,7 @@ export default function EditUserpage() {
   const [users, setUsers] = useState([]);
   const [showPassword, setShowPassword] = useState(false);
 
-  const API_URL = "https://my-react-order-system-app-pvj5.onrender.com/api";
+  const API_URL = "https://order-system-v1.onrender.com/api";
 
   const roleOptions = [
     { value: "user", label: "พนักงาน" },

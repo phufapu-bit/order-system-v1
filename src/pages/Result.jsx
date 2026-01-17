@@ -31,7 +31,7 @@ export default function Resultpage() {
   const [endDate, setEndDate] = useState("");
   const isAdminOrUser = localStorage.getItem("role");
   const guestTablenum = localStorage.getItem("guest_tablenum");
-  const API_URL = "https://my-react-order-system-app-pvj5.onrender.com/api";
+  const API_URL = "https://order-system-v1.onrender.com/api";
 
   // ฟังก์ชันจัดรูปแบบวันที่สำหรับแกน X และ Tooltip (เหมือนเดิม)
   const dateFormatter = (tickItem) => {

@@ -18,7 +18,7 @@ export default function Menupage() {
   const fileInputRef = useRef(null);
   const nameInputRef = useRef(null);
 
-  const API_URL = "https://my-react-order-system-app-pvj5.onrender.com/api";
+  const API_URL = "https://order-system-v1.onrender.com/api";
 
   // ฟังก์ชันดึงเมนู
   const getMenuList = async () => {

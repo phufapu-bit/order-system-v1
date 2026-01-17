@@ -31,7 +31,7 @@ export default function Orderpage() {
   const navigate = useNavigate();
   const ROLE = localStorage.getItem("role");
   const guestTablenum = localStorage.getItem("guest_tablenum");
-  const API_URL = "https://my-react-order-system-app-pvj5.onrender.com/api";
+  const API_URL = "https://order-system-v1.onrender.com/api";
 
   const calculatePrice = (menuName, qty) => {
     const menu = menuList.find((m) => m.ordername === menuName);
