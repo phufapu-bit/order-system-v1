@@ -32,7 +32,7 @@ const uploadToCloudinary = (buffer) => {
         folder: "menus",
         width: 300,
         height: 300,
-        crop: "fill",
+        // crop: "fill",
         gravity: "center",
         quality: "auto",
         fetch_format: "auto",
