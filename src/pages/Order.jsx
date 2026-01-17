@@ -1196,7 +1196,7 @@ export default function Orderpage() {
                           {/* `${API_URL}/uploads/${item.image}` */}
                           {/* `http://localhost:3001/uploads/${item.image}` */}
                           <img
-                            src={`${API_URL}/uploads/${item.image}`}
+                            src={item.image}
                             alt={item.ordername}
                             style={{
                               width: "100%",
