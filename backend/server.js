@@ -26,12 +26,11 @@ const uploadToCloudinary = (buffer) => {
     const stream = cloudinary.uploader.upload_stream(
       { folder: "menus" },
       (error, result) => {
-        if (result) resolve(result);
-        else reject(error);
+        if (error) reject(error);
+        else resolve(result);
       },
     );
-
-    streamifier.createReadStream(buffer).pipe(stream);
+    stream.end(buffer);
   });
 };
 
@@ -60,9 +59,9 @@ const storage = new CloudinaryStorage({
   },
 });
 
-const upload = multer({
-  storage: multer.memoryStorage(),
-});
+// const upload = multer({
+//   storage: multer.memoryStorage(),
+// });
 
 // const REMOVE_BG_API = "q8V1NnscArhuwznDPoMFeFWc";
 // const REMOVE_BG_API = process.env.REMOVE_BG_API;
@@ -99,7 +98,6 @@ app.post("/api/upload", upload.single("image"), async (req, res) => {
     res.status(500).json({ message: "Upload failed" });
   }
 });
-
 
 //---
 // TiDB data base
@@ -621,7 +619,7 @@ app.patch("/api/updatemenu", upload.single("image"), async (req, res) => {
       `UPDATE test.masterorder
        SET ordername=?, price=?, image=?, update_at=CURRENT_TIMESTAMP()
        WHERE id=?`,
-      [menuname, price, image, id]
+      [menuname, price, image, id],
     );
 
     res.json({ success: true, image });
@@ -630,7 +628,6 @@ app.patch("/api/updatemenu", upload.single("image"), async (req, res) => {
     res.status(500).json({ success: false });
   }
 });
-
 
 //---
 ///////////////////////////TiDB data base//////////////////////////////
