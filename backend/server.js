@@ -17,6 +17,8 @@ const app = express();
 // const PORT = 3001;
 const PORT = process.env.PORT || 3001;
 app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -138,7 +140,6 @@ app.post("/api/getuser", async (req, res) => {
   }
 });
 
-
 ////////////////////// TiDB data base ///////////////////////
 app.patch("/api/updateProfileByAdmin/:name", async (req, res) => {
   const oldName = req.params.name;
@@ -221,8 +222,6 @@ app.patch("/api/updateProfileByAdmin/:name", async (req, res) => {
   }
 });
 
-
-
 //////////////////// TiDB data base //////////////////////
 app.delete("/api/deleteuser/:id", async (req, res) => {
   const { id } = req.params;
@@ -246,7 +245,6 @@ app.delete("/api/deleteuser/:id", async (req, res) => {
     });
   }
 });
-
 
 //---
 ////////////TiDB data base ///////////////////
@@ -295,8 +293,6 @@ app.post("/api/register", async (req, res) => {
     return res.status(500).json({ success: false, message: "Database error" });
   }
 });
-
-
 
 //////////////////TiDB data base /////////////////////
 app.post("/api/order", async (req, res) => {
@@ -513,8 +509,6 @@ app.patch("/api/updateOrder", async (req, res) => {
   }
 });
 
-
-
 //---
 //////////////////////TiDB data base///////////////////
 app.delete("/api/deleteOrder/:id", async (req, res) => {
@@ -536,7 +530,6 @@ app.delete("/api/deleteOrder/:id", async (req, res) => {
   }
 });
 
-
 //---
 ////////////////////TiDB data base////////////////////
 app.post("/api/getmenu", async (req, res) => {
@@ -549,8 +542,6 @@ app.post("/api/getmenu", async (req, res) => {
     res.status(500).json({ success: false, message: "Database error" });
   }
 });
-
-
 
 //---
 //////////////////////TiDB database////////////////
@@ -590,7 +581,6 @@ app.post("/api/addmenu", upload.single("image"), async (req, res) => {
   }
 });
 
-
 app.patch("/api/updatemenu", upload.single("image"), async (req, res) => {
   try {
     const { id, menuname, price, image_old } = req.body;
@@ -602,7 +592,7 @@ app.patch("/api/updatemenu", upload.single("image"), async (req, res) => {
       `UPDATE test.masterorder
        SET ordername=?, price=?, image=?, update_at=CURRENT_TIMESTAMP()
        WHERE id=?`,
-      [menuname, price, image, id]
+      [menuname, price, image, id],
     );
 
     res.json({ success: true, image });
@@ -611,8 +601,6 @@ app.patch("/api/updatemenu", upload.single("image"), async (req, res) => {
     res.status(500).json({ success: false });
   }
 });
-
-
 
 //---
 ///////////////////////////TiDB data base//////////////////////////////
@@ -635,8 +623,6 @@ app.delete("/api/deletemenu/:id", async (req, res) => {
   }
 });
 
-
-
 // ดึงจำนวน "กำลังทำอาหาร" (Pending Count)
 ///////////////////////////////TiDB data base///////////////////////////////
 app.post("/api/getPendingOrderCount", async (req, res) => {
@@ -651,7 +637,6 @@ app.post("/api/getPendingOrderCount", async (req, res) => {
     res.status(500).json({ success: false, message: "Database error" });
   }
 });
-
 
 // ดึงยอดขายรวมและออเดอร์วันนี้ (Total Sales & Today's Orders)
 ///////////////////////TiDB data base////////////////////////
@@ -711,7 +696,6 @@ app.post("/api/getSalesSummary", async (req, res) => {
   }
 });
 
-
 // API สำหรับดึงข้อมูลยอดขายรายวันสำหรับกราฟ
 ////////////////////TiDB data base///////////////////
 app.post("/api/getDailySales", async (req, res) => {
@@ -746,7 +730,6 @@ app.post("/api/getDailySales", async (req, res) => {
   }
 });
 
-
 ///////////////////TiDB data base////////////////////
 app.get("/api/guestOrders", async (req, res) => {
   // 1. ดึงหมายเลขโต๊ะจาก Query Parameter
@@ -775,8 +758,6 @@ app.get("/api/guestOrders", async (req, res) => {
     });
   }
 });
-
-
 
 app.patch("/api/completeTableOrders", async (req, res) => {
   const { tablenum } = req.body;
