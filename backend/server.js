@@ -941,7 +941,8 @@ app.post("/api/getmenu", async (req, res) => {
 app.post("/api/addmenu", upload.single("image"), async (req, res) => {
   const { menuname, price } = req.body;
 
-  console.log(JSON.stringify(req.file, null, 2));
+  console.log("req.file =", JSON.stringify(req.file, null, 2));
+
 
   if (!menuname || !price) {
     return res.status(400).json({ message: "menuname and price required" });
@@ -951,7 +952,7 @@ app.post("/api/addmenu", upload.single("image"), async (req, res) => {
     return res.status(400).json({ message: "image required" });
   }
 
-  const image = req.file.secure_url; // ✅ ตรงนี้สำคัญมาก
+  const image = req.file?.path || req.file?.secure_url; // ✅ ตรงนี้สำคัญมาก
 
   try {
     const [maxIdResult] = await db.query(
