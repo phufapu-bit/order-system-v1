@@ -43,54 +43,42 @@ export default function Menupage() {
     const formData = new FormData();
     formData.append("image", image); // image = file ที่เลือกจาก input
     // ("http://localhost:3001/upload");
-    const res = await axios.post(`${API_URL}/upload`, formData,
-      { headers: { "Content-Type": "multipart/form-data" } }
-    );
+    const res = await axios.post(`${API_URL}/upload`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
     // return res.data.image;
   };
 
   // ฟังก์เพิ่มเมนู
   const handleAddMenu = async () => {
     try {
-      if (!image) return alert("กรุณาเลือกรูป");
-
-      const fileName = await handleUpload();
-
       if (!menuname || !price || !image) {
         return Swal.fire({
           icon: "warning",
           title: "กรอกข้อมูลให้ครบ",
         });
       }
+
       const formData = new FormData();
       formData.append("menuname", menuname);
       formData.append("price", price);
-      if (image instanceof File) {
-        formData.append("image", fileName);
-      }
+      formData.append("image", image); // ✅ ส่งไฟล์จริง
 
-      // `${API_URL}/addmenu`
-      // "http://localhost:3001/api/addmenu"
-      await axios.post(`${API_URL}/addmenu`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      await axios.post(`${API_URL}/addmenu`, formData);
 
       Swal.fire({
         icon: "success",
         title: "เพิ่มเมนูสำเร็จ!",
         timer: 1000,
         showConfirmButton: false,
-      }).then(() => {
-        getMenuList();
-        resetForm();
       });
+
+      getMenuList();
+      resetForm();
     } catch (error) {
       Swal.fire({
         icon: "error",
         title: "เกิดข้อผิดพลาด",
-        text: "ไม่สามารถเพิ่มเมนูได้",
       });
     }
   };
@@ -123,51 +111,47 @@ export default function Menupage() {
 
   // ฟังก์ชันการแก้ไข
   const handleUpdate = async () => {
-    Swal.fire({
+    const result = await Swal.fire({
       title: "คุณต้องการแก้ไขเมนูนี้ใช่ไหม?",
       icon: "question",
       showCancelButton: true,
       confirmButtonText: "ใช่",
       cancelButtonText: "ไม่",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        // `${API_URL}/updatemenu`
-        // "http://localhost:3001/api/updatemenu"
-        try {
-          let fileName = image; // default = ไฟล์เดิม (string)
-
-          // ถ้าเลือกไฟล์ใหม่ → upload + remove.bg
-          if (image instanceof File) {
-            fileName = await handleUpload();
-          }
-
-          const formData = new FormData();
-          formData.append("id", id);
-          formData.append("menuname", menuname);
-          formData.append("price", price);
-          formData.append("image", fileName); // ส่งชื่อไฟล์
-
-          await axios.patch(`${API_URL}/updatemenu`, formData, {
-            headers: { "Content-Type": "multipart/form-data" },
-          });
-          Swal.fire({
-            icon: "success",
-            title: "แก้ไขเมนูสำเร็จ!",
-            timer: 1000,
-            showConfirmButton: false,
-          }).then(() => {
-            getMenuList();
-            resetForm();
-          });
-        } catch (error) {
-          Swal.fire({
-            icon: "error",
-            title: "เกิดข้อผิดพลาด",
-            text: "ไม่สามารถแก้ไขเมนูได้",
-          });
-        }
-      }
     });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      const formData = new FormData();
+      formData.append("id", id);
+      formData.append("menuname", menuname);
+      formData.append("price", price);
+
+      if (image instanceof File) {
+        // 🔥 ส่งไฟล์จริง
+        formData.append("image", image);
+      } else {
+        // 🔥 ส่ง path เดิม
+        formData.append("image", image);
+      }
+
+      await axios.patch(`${API_URL}/updatemenu`, formData);
+
+      Swal.fire({
+        icon: "success",
+        title: "แก้ไขเมนูสำเร็จ!",
+        timer: 1000,
+        showConfirmButton: false,
+      });
+
+      getMenuList();
+      resetForm();
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "เกิดข้อผิดพลาด",
+      });
+    }
   };
 
   // ฟังก์การลบ
@@ -229,7 +213,7 @@ export default function Menupage() {
   }, []);
 
   return (
-        <div className="container">
+    <div className="container">
       <div
         className="card shadow-lg mt-0 m-2"
         style={{
@@ -261,273 +245,273 @@ export default function Menupage() {
         >
           จัดการเมนู
         </h1>
+        <div
+          className="card-body"
+          style={{ fontFamily: "'Kanit', sans-serif" }}
+        >
+          {/* ฟอร์มเพิ่ม/แก้ไขเมนู */}
           <div
-            className="card-body"
-            style={{ fontFamily: "'Kanit', sans-serif" }}
+            className="card p-4 mb-4 shadow"
+            style={{
+              borderRadius: "20px",
+              background: "linear-gradient(135deg, #ffffff 0%, #f7f7f7 100%)",
+            }}
           >
-            {/* ฟอร์มเพิ่ม/แก้ไขเมนู */}
-            <div
-              className="card p-4 mb-4 shadow"
-              style={{
-                borderRadius: "20px",
-                background: "linear-gradient(135deg, #ffffff 0%, #f7f7f7 100%)",
-              }}
-            >
-              <h4 className="mb-3 fw-bold" style={{ color: "#333" }}>
-                {isEditing ? "แก้ไขเมนู" : "เพิ่มเมนูใหม่"}
-              </h4>
+            <h4 className="mb-3 fw-bold" style={{ color: "#333" }}>
+              {isEditing ? "แก้ไขเมนู" : "เพิ่มเมนูใหม่"}
+            </h4>
 
-              <div className="row g-3">
-                {/* ชื่อเมนู */}
-                <div className="col-md-5">
-                  <label className="form-label">ชื่อเมนู</label>
-                  <input
-                    ref={nameInputRef}
-                    style={{ fontSize: "18px" }}
-                    type="text"
-                    className="form-control"
-                    placeholder="เช่น กะเพราไก่ไข่ดาว"
-                    value={menuname}
-                    onChange={(e) => setMenuname(e.target.value)}
-                    autoFocus
-                  />
-                </div>
+            <div className="row g-3">
+              {/* ชื่อเมนู */}
+              <div className="col-md-5">
+                <label className="form-label">ชื่อเมนู</label>
+                <input
+                  ref={nameInputRef}
+                  style={{ fontSize: "18px" }}
+                  type="text"
+                  className="form-control"
+                  placeholder="เช่น กะเพราไก่ไข่ดาว"
+                  value={menuname}
+                  onChange={(e) => setMenuname(e.target.value)}
+                  autoFocus
+                />
+              </div>
 
-                {/* ราคา */}
-                <div className="col-md-2">
-                  <label className="form-label">ราคา (บาท)</label>
-                  <input
-                    style={{ fontSize: "18px" }}
-                    type="number"
-                    className="form-control"
-                    placeholder="0"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    min="0"
-                  />
-                </div>
+              {/* ราคา */}
+              <div className="col-md-2">
+                <label className="form-label">ราคา (บาท)</label>
+                <input
+                  style={{ fontSize: "18px" }}
+                  type="number"
+                  className="form-control"
+                  placeholder="0"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  min="0"
+                />
+              </div>
 
-                {/* อัปโหลดรูป */}
-                <div className="col-md-5">
-                  <label className="form-label">รูปเมนู</label>
-                  <div className="d-flex align-items-center gap-2">
-                    {isEditing && typeof image === "string" ? (
-                      <>
-                        <input
-                          type="file"
-                          className="form-control"
-                          ref={fileInputRef}
-                          onChange={(e) => setImage(e.target.files[0])}
-                        />
-
-                        <button
-                          onClick={() => setShowImageModal(true)}
-                          className="btn btn-outline-primary"
-                          style={{ whiteSpace: "nowrap" }}
-                        >
-                          ดูรูปเดิม
-                        </button>
-                      </>
-                    ) : (
+              {/* อัปโหลดรูป */}
+              <div className="col-md-5">
+                <label className="form-label">รูปเมนู</label>
+                <div className="d-flex align-items-center gap-2">
+                  {isEditing && typeof image === "string" ? (
+                    <>
                       <input
                         type="file"
                         className="form-control"
                         ref={fileInputRef}
                         onChange={(e) => setImage(e.target.files[0])}
                       />
-                    )}
-                  </div>
-                </div>
-              </div>
 
-              {/* Modal รูปภาพ */}
-              {showImageModal && (
-                <div
-                  style={{
-                    position: "fixed",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    height: "100%",
-                    background: "rgba(0,0,0,0.75)",
-                    backdropFilter: "blur(3px)",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    zIndex: 2000,
-                  }}
-                  onClick={() => setShowImageModal(false)}
-                >
-                  {/* `${API_URL}/uploads/${image}` */}
-                  {/* `http://localhost:3001/uploads/${image}` */}
-                  <img
-                    src={
-                      image instanceof File
-                        ? URL.createObjectURL(image)
-                        : `${API_URL}/uploads/${image}`
-                    }
-                    alt="old"
-                    style={{
-                      maxHeight: "80%",
-                      maxWidth: "80%",
-                      borderRadius: "15px",
-                      boxShadow: "0 8px 25px rgba(0,0,0,0.4)",
-                    }}
-                  />
-                </div>
-              )}
-
-              {/* ปุ่ม Action */}
-              <div className="row mt-4">
-                <div className="col-md-6 d-flex gap-3">
-                  {isEditing ? (
-                    <>
                       <button
-                        className="btn btn-warning w-50"
-                        onClick={handleUpdate}
+                        onClick={() => setShowImageModal(true)}
+                        className="btn btn-outline-primary"
+                        style={{ whiteSpace: "nowrap" }}
                       >
-                        อัปเดตเมนู
-                      </button>
-                      <button
-                        className="btn btn-secondary w-50"
-                        onClick={handleCancelEdit}
-                      >
-                        ยกเลิก
+                        ดูรูปเดิม
                       </button>
                     </>
                   ) : (
-                    <button
-                      className="btn btn-success w-100"
-                      onClick={handleAddMenu}
-                    >
-                      บันทึกเมนู
-                    </button>
+                    <input
+                      type="file"
+                      className="form-control"
+                      ref={fileInputRef}
+                      onChange={(e) => setImage(e.target.files[0])}
+                    />
                   )}
                 </div>
-
-                <div className="col-md-6">
-                  <button className="btn btn-danger w-100" onClick={clearForm}>
-                    ล้างข้อมูล
-                  </button>
-                </div>
               </div>
             </div>
 
+            {/* Modal รูปภาพ */}
+            {showImageModal && (
+              <div
+                style={{
+                  position: "fixed",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "100%",
+                  background: "rgba(0,0,0,0.75)",
+                  backdropFilter: "blur(3px)",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  zIndex: 2000,
+                }}
+                onClick={() => setShowImageModal(false)}
+              >
+                {/* `${API_URL}/uploads/${image}` */}
+                {/* `http://localhost:3001/uploads/${image}` */}
+                <img
+                  src={
+                    image instanceof File
+                      ? URL.createObjectURL(image)
+                      : `${API_URL}/uploads/${image}`
+                  }
+                  alt="old"
+                  style={{
+                    maxHeight: "80%",
+                    maxWidth: "80%",
+                    borderRadius: "15px",
+                    boxShadow: "0 8px 25px rgba(0,0,0,0.4)",
+                  }}
+                />
+              </div>
+            )}
+
+            {/* ปุ่ม Action */}
+            <div className="row mt-4">
+              <div className="col-md-6 d-flex gap-3">
+                {isEditing ? (
+                  <>
+                    <button
+                      className="btn btn-warning w-50"
+                      onClick={handleUpdate}
+                    >
+                      อัปเดตเมนู
+                    </button>
+                    <button
+                      className="btn btn-secondary w-50"
+                      onClick={handleCancelEdit}
+                    >
+                      ยกเลิก
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    className="btn btn-success w-100"
+                    onClick={handleAddMenu}
+                  >
+                    บันทึกเมนู
+                  </button>
+                )}
+              </div>
+
+              <div className="col-md-6">
+                <button className="btn btn-danger w-100" onClick={clearForm}>
+                  ล้างข้อมูล
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div
+            className="card shadow-sm mb-3"
+            style={{
+              borderRadius: "16px",
+              background: "rgba(255, 255, 255, 0.6)",
+              backdropFilter: "blur(10px)",
+              border: "1px solid rgba(255, 255, 255, 0.3)",
+            }}
+          >
             <div
-              className="card shadow-sm mb-3"
+              className="d-flex align-items-center gap-3 px-3 py-3"
               style={{
-                borderRadius: "16px",
-                background: "rgba(255, 255, 255, 0.6)",
-                backdropFilter: "blur(10px)",
-                border: "1px solid rgba(255, 255, 255, 0.3)",
+                borderLeft: "6px solid #0d6efd",
+                borderRadius: "12px",
+                // background: "linear-gradient(135deg, #f8f9fa, #ffffff)",
+                background: "linear-gradient(135deg, #ffffff 0%, #f7f7f7)",
+                boxShadow: "0 4px 10px rgba(0,0,0,0.10)",
               }}
             >
+              {/* วงกลมไอคอนสวยๆ */}
               <div
-                className="d-flex align-items-center gap-3 px-3 py-3"
                 style={{
-                  borderLeft: "6px solid #0d6efd",
-                  borderRadius: "12px",
-                  // background: "linear-gradient(135deg, #f8f9fa, #ffffff)",
-                  background: "linear-gradient(135deg, #ffffff 0%, #f7f7f7)",
-                  boxShadow: "0 4px 10px rgba(0,0,0,0.10)",
+                  width: "48px",
+                  height: "48px",
+                  borderRadius: "50%",
+                  background: "linear-gradient(135deg, #dbeafe, #bfdbfe)",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  fontSize: "22px",
                 }}
               >
-                {/* วงกลมไอคอนสวยๆ */}
-                <div
-                  style={{
-                    width: "48px",
-                    height: "48px",
-                    borderRadius: "50%",
-                    background: "linear-gradient(135deg, #dbeafe, #bfdbfe)",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    fontSize: "22px",
-                  }}
-                >
-                  📋
-                </div>
-
-                <h4 className="fw-bold m-0" style={{ fontSize: "24px" }}>
-                  รายการเมนูทั้งหมด
-                </h4>
+                📋
               </div>
+
+              <h4 className="fw-bold m-0" style={{ fontSize: "24px" }}>
+                รายการเมนูทั้งหมด
+              </h4>
             </div>
+          </div>
 
-            {/* เมนูทั้งหมด */}
+          {/* เมนูทั้งหมด */}
 
-            <div
-              className="row g-4"
-              style={{
-                maxHeight: "500px",
-                overflowY: "auto",
-                paddingRight: "10px",
-                marginTop: "5px",
-              }}
-            >
-              {menuList.length > 0 ? (
-                menuList.map((menu) => (
-                  <div className="col-md-4" key={menu.id}>
-                    <div
-                      className="card shadow-lg"
-                      style={{ borderRadius: "20px", overflow: "hidden" }}
-                    >
-                      {/* `${API_URL}/uploads/${menu.image}` */}
-                      {/* `http://localhost:3001/uploads/${menu.image}` */}
-                      <img
-                        src={`${API_URL}/uploads/${menu.image}`}
-                        alt={menu.ordername}
-                        className="card-img-top"
-                        style={{
-                          width: "100%",
-                          height: "200px",
-                          objectFit: "contain",
-                          background: "#fafafa",
-                          boxShadow: "0 4px 10px rgba(0,0,0,0.10)",
-                        }}
-                      />
-                      <div className="card-body">
-                        <h5 className="card-title fw-bold">{menu.ordername}</h5>
+          <div
+            className="row g-4"
+            style={{
+              maxHeight: "500px",
+              overflowY: "auto",
+              paddingRight: "10px",
+              marginTop: "5px",
+            }}
+          >
+            {menuList.length > 0 ? (
+              menuList.map((menu) => (
+                <div className="col-md-4" key={menu.id}>
+                  <div
+                    className="card shadow-lg"
+                    style={{ borderRadius: "20px", overflow: "hidden" }}
+                  >
+                    {/* `${API_URL}/uploads/${menu.image}` */}
+                    {/* `http://localhost:3001/uploads/${menu.image}` */}
+                    <img
+                      src={`${API_URL}/uploads/${menu.image}`}
+                      alt={menu.ordername}
+                      className="card-img-top"
+                      style={{
+                        width: "100%",
+                        height: "200px",
+                        objectFit: "contain",
+                        background: "#fafafa",
+                        boxShadow: "0 4px 10px rgba(0,0,0,0.10)",
+                      }}
+                    />
+                    <div className="card-body">
+                      <h5 className="card-title fw-bold">{menu.ordername}</h5>
 
-                        <p
-                          className="text-primary fw-bold"
-                          style={{ fontSize: "18px" }}
+                      <p
+                        className="text-primary fw-bold"
+                        style={{ fontSize: "18px" }}
+                      >
+                        ราคา {menu.price} บาท
+                      </p>
+
+                      <p className="text-muted" style={{ fontSize: "12px" }}>
+                        {menu.update_at
+                          ? new Date(menu.update_at).toLocaleString("th-TH")
+                          : ""}
+                      </p>
+
+                      <div className="d-flex gap-2">
+                        <button
+                          className="btn btn-primary flex-fill"
+                          onClick={() => handleEdit(menu)}
                         >
-                          ราคา {menu.price} บาท
-                        </p>
+                          แก้ไข
+                        </button>
 
-                        <p className="text-muted" style={{ fontSize: "12px" }}>
-                          {menu.update_at
-                            ? new Date(menu.update_at).toLocaleString("th-TH")
-                            : ""}
-                        </p>
-
-                        <div className="d-flex gap-2">
-                          <button
-                            className="btn btn-primary flex-fill"
-                            onClick={() => handleEdit(menu)}
-                          >
-                            แก้ไข
-                          </button>
-
-                          <button
-                            className="btn btn-danger flex-fill"
-                            onClick={() => handleDelete(menu.id)}
-                          >
-                            ลบ
-                          </button>
-                        </div>
+                        <button
+                          className="btn btn-danger flex-fill"
+                          onClick={() => handleDelete(menu.id)}
+                        >
+                          ลบ
+                        </button>
                       </div>
                     </div>
                   </div>
-                ))
-              ) : (
-                <div className="text-center mt-5">
-                  <h4>ยังไม่มีรายการเมนู</h4>
                 </div>
-              )}
-            </div>
+              ))
+            ) : (
+              <div className="text-center mt-5">
+                <h4>ยังไม่มีรายการเมนู</h4>
+              </div>
+            )}
           </div>
+        </div>
       </div>
     </div>
   );
