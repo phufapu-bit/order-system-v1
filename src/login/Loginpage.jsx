@@ -289,7 +289,7 @@ export default function Login() {
             fontFamily: "'Kanit', sans-serif",
             letterSpacing: "0.5px",
             fontSize: "20px",
-            display: "none",
+            // display: "none",
           }}
             // disabled
         >
@@ -322,7 +322,7 @@ export default function Login() {
               setRole(null);
             }}
             disabled={true} // disable การลงทะเบียนเพื่อให้มีเฉพาะ Admin ทำเท่านั้น
-            style={{ fontFamily: "'Kanit', sans-serif" ,display:"none"}}
+            style={{ fontFamily: "'Kanit', sans-serif"}}
           >
             {isRegistering
               ? "มีบัญชีอยู่แล้ว? เข้าสู่ระบบ"

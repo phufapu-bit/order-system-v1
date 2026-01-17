@@ -4,6 +4,8 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
+const multer = require("multer");
+const path = require("path");
 
 const app = express();
 // const PORT = 3001;
@@ -11,6 +13,7 @@ const PORT = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(bodyParser.json());
+app.use("/uploads", express.static("uploads"));
 
 // // Database connection using async/await
 // const db = mysql.createPool({
@@ -30,6 +33,19 @@ const db = mysql.createPool({
   database: "test",
 });
 
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/");
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({ storage: storage });
+
+const REMOVE_BG_API = "q8V1NnscArhuwznDPoMFeFWc";
+
 // Start the server only after a successful database connection
 (async function startServer() {
   try {
@@ -44,6 +60,41 @@ const db = mysql.createPool({
     console.error("❌ Database connection failed:", err);
   }
 })();
+
+app.post("/upload", upload.single("image"), async (req, res) => {
+  try {
+    const inputPath = req.file.path; // รูปต้นฉบับ
+    const outputPath = `uploads/no-bg-${req.file.filename}`; // รูปพื้นหลังลบแล้ว
+
+    // ส่งรูปเข้า remove.bg API
+    const formData = new FormData();
+    formData.append("size", "auto");
+    formData.append("image_file", fs.createReadStream(inputPath));
+
+    const result = await axios({
+      method: "post",
+      url: "https://api.remove.bg/v1.0/removebg",
+      data: formData,
+      responseType: "arraybuffer",
+      headers: {
+        ...formData.getHeaders(),
+        "X-Api-Key": REMOVE_BG_API,
+      },
+    });
+
+    // เซฟไฟล์ผลลัพธ์ลงโฟลเดอร์ uploads/
+    fs.writeFileSync(outputPath, result.data);
+
+    // ส่งชื่อไฟล์กลับไปให้ React
+    res.json({
+      success: true,
+      image: `no-bg-${req.file.filename}`,
+    });
+  } catch (error) {
+    console.error("Remove BG Error:", error.response?.data || error.message);
+    res.status(500).json({ success: false });
+  }
+});
 
 //---
 // TiDB data base
@@ -229,7 +280,7 @@ app.patch("/api/updateProfileByAdmin/:name", async (req, res) => {
 
     // รวม SQL Query และทำการอัปเดต
     const sql = `UPDATE test.user SET ${updates.join(
-      ", "
+      ", ",
     )}, update_at = CURRENT_TIMESTAMP() WHERE name = ?`;
 
     // หากมีการเปลี่ยนชื่อผู้ใช้ ต้องใช้ชื่อเดิม (oldName) ในการค้นหา
@@ -397,7 +448,7 @@ app.post("/api/register", async (req, res) => {
 
   try {
     const [maxIdResult] = await db.query(
-      "SELECT MAX(id) AS max_id FROM test.user"
+      "SELECT MAX(id) AS max_id FROM test.user",
     );
     const newId = (maxIdResult[0].max_id || 0) + 1;
     const checkSql = "SELECT name FROM test.user WHERE name = ?";
@@ -414,9 +465,9 @@ app.post("/api/register", async (req, res) => {
       "INSERT INTO test.user (id, name, password, role, create_at, update_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP())";
     const [results] = await db.query(insertSql, [
       newId,
-      name, 
-      hashedPassword, 
-      role
+      name,
+      hashedPassword,
+      role,
     ]);
 
     res.json({
@@ -512,7 +563,7 @@ app.post("/api/order", async (req, res) => {
   try {
     // 1. หา ID ที่มากที่สุดในปัจจุบัน (หรือ 0 ถ้าไม่มีข้อมูลเลย)
     const [maxIdResult] = await db.query(
-      "SELECT MAX(id) AS max_id FROM test.listorder"
+      "SELECT MAX(id) AS max_id FROM test.listorder",
     );
     const newId = (maxIdResult[0].max_id || 0) + 1; // 2. แก้ไข SQL Query: เพิ่ม 'id' ในคอลัมน์ และเพิ่ม '?' สำหรับค่า id ใหม่
     const sql =
@@ -894,22 +945,24 @@ app.post("/api/getmenu", async (req, res) => {
 
 //---
 //////////////////////TiDB database////////////////
-app.post("/api/addmenu", async (req, res) => {
+app.post("/api/addmenu", upload.single("image"), async (req, res) => {
   const { menuname, price } = req.body;
-  if (!menuname || !price) {
+  const image = req.file ? req.file.path : null;
+
+  if (!menuname || !price || !image) {
     return res
       .status(400)
-      .json({ success: false, message: "menuname, price required" });
+      .json({ success: false, message: "menuname, price and image required" });
   }
   try {
     const [maxIdResult] = await db.query(
-      "SELECT MAX(id) AS max_id FROM test.masterorder"
+      "SELECT MAX(id) AS max_id FROM test.masterorder",
     );
     const newId = (maxIdResult[0].max_id || 0) + 1;
 
     const sql =
-      "INSERT INTO test.masterorder (id, ordername, price, create_at, update_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP())";
-    const [results] = await db.query(sql, [newId, menuname, price]);
+      "INSERT INTO test.masterorder (id, ordername, price,image, create_at, update_at) VALUES (?, ?, ?,?, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP())";
+    const [results] = await db.query(sql, [newId, menuname, price, image]);
     res.json({
       success: true,
       message: "Menu added successfully",
@@ -946,25 +999,32 @@ app.post("/api/addmenu", async (req, res) => {
 
 //---
 //////////////////////TiDB data base//////////////////////
-app.patch("/api/updatemenu", async (req, res) => {
-  const { id, menuname, price } = req.body;
+app.patch("/api/updatemenu", upload.none(), async (req, res) => {
+  const { id, menuname, price, image } = req.body;
   if (!id || !menuname || !price) {
-    return res
-      .status(400)
-      .json({ success: false, message: "id, menuname, price required" });
+    return res.status(400).json({
+      success: false,
+      message: "id, menuname, price and image required",
+    });
   }
+  let query = "";
+  let data = [];
+
+  if (image) {
+    query =
+      "UPDATE test.masterorder SET ordername=?, price=?, image=?, update_at=NOW() WHERE id=?";
+    data = [menuname, price, image, id];
+  } else {
+    query =
+      "UPDATE test.masterorder SET ordername=?, price=?, update_at=NOW() WHERE id=?";
+    data = [menuname, price, id];
+  }
+
   try {
-    const sql =
-      "UPDATE test.masterorder SET ordername = ?, price = ?, update_at = CURRENT_TIMESTAMP() WHERE id = ?";
-    const [results] = await db.query(sql, [menuname, price, id]);
-    if (results.affectedRows > 0) {
-      res.json({ success: true, message: "Update menu successfully" });
-    } else {
-      res.status(404).json({ success: false, message: "Menu not found" });
-    }
+    await db.query(query, data);
+    res.json({ success: true, message: "อัปเดตเมนูสำเร็จ" });
   } catch (err) {
-    console.error("❌ Query error:", err);
-    res.status(500).json({ success: false, message: "Database error" });
+    res.status(500).json({ success: false, error: "อัปเดตไม่สำเร็จ" });
   }
 });
 
@@ -1342,5 +1402,28 @@ app.patch("/api/completeTableOrders", async (req, res) => {
       message: "เกิดข้อผิดพลาดภายใน Server ในการปิดยอด",
       error: error.message,
     });
+  }
+});
+
+app.get("/api/takeaway", async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      "SELECT tablenum FROM listorder WHERE tablenum LIKE 'T%' ORDER BY tablenum DESC LIMIT 1"
+    );
+
+    let newCode = "T001";
+
+    if (rows.length > 0 && rows[0].tablenum) {
+      const lastCode = rows[0].tablenum; // เช่น "T005"
+      const lastNumber = parseInt(lastCode.slice(1), 10); // ตัดตัว T
+      if (!isNaN(lastNumber)) {
+        const nextNumber = lastNumber + 1;
+        newCode = "T" + String(nextNumber).padStart(3, "0");
+      }
+    }
+    res.json({ code: newCode });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
   }
 });

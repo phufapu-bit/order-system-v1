@@ -2,15 +2,13 @@
    Root variables
 ========================= */
 :root {
-  font-family: 'Kanit', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: "Kanit", system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
-  /* Light mode */
-  --bg-color: #f4f7fa;
+  --bg-color: #e0e0e0d1;
   --text-color: #2e3a4e;
 
-  /* Dark mode */
   --bg-color-dark: #1f1f1f;
   --text-color-dark: #e0e0e0;
 
@@ -23,7 +21,8 @@
 /* =========================
    Global body/html
 ========================= */
-html, body {
+html,
+body {
   height: 100%;
   margin: 0;
   padding: 0;
@@ -32,7 +31,7 @@ html, body {
 body {
   display: flex;
   flex-direction: column;
-  background-color: var(--bg-color);
+  background: var(--bg-color);
   color: var(--text-color);
   transition: background-color 0.3s ease, color 0.3s ease;
 }
@@ -87,8 +86,8 @@ footer {
 ========================= */
 @media (prefers-color-scheme: dark) {
   body {
-    background-color: var(--bg-color-white);
-    color: var(--text-color-dark);
+    background: var(--bg-color);
+    color: var(--text-color);
   }
 
   footer {
