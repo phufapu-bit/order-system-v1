@@ -348,9 +348,9 @@ export default function Menupage() {
                 {/* `http://localhost:3001/uploads/${image}` */}
                 <img
                   src={
-                    image instanceof File
-                      ? URL.createObjectURL(image)
-                      : // : `${API_URL}${image}`
+                    // image instanceof File
+                    //   ? URL.createObjectURL(image)
+                    //   : // : `${API_URL}${image}`
                         image
                   }
                   alt="old"
