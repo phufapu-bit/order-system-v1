@@ -1022,32 +1022,33 @@ app.post("/api/addmenu", upload.single("image"), async (req, res) => {
 
 //---
 //////////////////////TiDB data base//////////////////////
-app.patch("/api/updatemenu", upload.none(), async (req, res) => {
-  const { id, menuname, price, image } = req.body;
+app.patch("/api/updatemenu", upload.single("image"), async (req, res) => {
+  const { id, menuname, price } = req.body;
   if (!id || !menuname || !price) {
     return res.status(400).json({
       success: false,
       message: "id, menuname, price and image required",
     });
   }
-  let query = "";
-  let data = [];
 
-  if (image) {
-    query =
-      "UPDATE test.masterorder SET ordername=?, price=?, image=?, update_at=NOW() WHERE id=?";
-    data = [menuname, price, image, id];
-  } else {
-    query =
-      "UPDATE test.masterorder SET ordername=?, price=?, update_at=NOW() WHERE id=?";
-    data = [menuname, price, id];
+  let imagePath = req.body.image;
+
+  if (req.file) {
+    imagePath = `/uploads/${req.file.filename}`; // มีไฟล์ใหม่
   }
 
   try {
-    await db.query(query, data);
-    res.json({ success: true, message: "อัปเดตเมนูสำเร็จ" });
+    await db.query(
+      `UPDATE test.masterorder
+       SET ordername = ?, price = ?, image = ?, update_at = CURRENT_TIMESTAMP()
+       WHERE id = ?`,
+      [menuname, price, imagePath, id],
+    );
+
+    res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ success: false, error: "อัปเดตไม่สำเร็จ" });
+    console.error("Update error:", err);
+    res.status(500).json({ message: "Database error" });
   }
 });
 
