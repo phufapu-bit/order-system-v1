@@ -61,7 +61,7 @@ const REMOVE_BG_API = "q8V1NnscArhuwznDPoMFeFWc";
   }
 })();
 
-app.post("/upload", upload.single("image"), async (req, res) => {
+app.post("/api/upload", upload.single("image"), async (req, res) => {
   try {
     const inputPath = req.file.path; // รูปต้นฉบับ
     const outputPath = `uploads/no-bg-${req.file.filename}`; // รูปพื้นหลังลบแล้ว
