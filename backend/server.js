@@ -1024,7 +1024,10 @@ app.patch("/api/updatemenu", upload.single("image"), async (req, res) => {
 
     let image = image_old;
     if (req.file) {
-      image = req.file.filename; // 🔥 รูปใหม่
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "menus",
+      });
+      imageUrl = result.secure_url;
     }
 
     await db.query(
