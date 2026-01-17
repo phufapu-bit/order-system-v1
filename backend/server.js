@@ -16,6 +16,13 @@ const PORT = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(bodyParser.json());
+
+const uploadDir = path.join(__dirname, "uploads");
+
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
+
 app.use("/uploads", express.static("uploads"));
 
 // // Database connection using async/await
@@ -45,9 +52,9 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage: storage });
+const upload = multer({ storage });
 
-const REMOVE_BG_API = "q8V1NnscArhuwznDPoMFeFWc";
+// const REMOVE_BG_API = "q8V1NnscArhuwznDPoMFeFWc";
 
 // Start the server only after a successful database connection
 (async function startServer() {
@@ -71,7 +78,8 @@ app.post("/api/upload", upload.single("image"), async (req, res) => {
     }
 
     const inputPath = req.file.path; // รูปต้นฉบับ
-    const outputPath = `uploads/no-bg-${req.file.filename}`; // รูปพื้นหลังลบแล้ว
+    const outputFilename = `no-bg-${req.file.filename}`;
+    const outputPath = path.join(uploadDir, outputFilename);
 
     // ส่งรูปเข้า remove.bg API
     const formData = new FormData();
@@ -96,10 +104,13 @@ app.post("/api/upload", upload.single("image"), async (req, res) => {
     // ส่งชื่อไฟล์กลับไปให้ React
     res.json({
       success: true,
-      image: `no-bg-${req.file.filename}`,
+      imageUrl: `/uploads/${outputFilename}`,
     });
   } catch (error) {
-    console.error("Remove BG Error:", error.response?.data?.toString() || error.message);
+    console.error(
+      "Remove BG Error:",
+      error.response?.data?.toString() || error.message,
+    );
     res.status(500).json({ success: false, message: "Remove BG failed" });
   }
 });
