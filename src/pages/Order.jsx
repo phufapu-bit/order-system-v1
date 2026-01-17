@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
 import Select from "react-select";
 import axios from "axios";
 import "../App.css";
