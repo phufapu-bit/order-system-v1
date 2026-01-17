@@ -10,11 +10,6 @@ const saltRounds = 10;
 const multer = require("multer");
 const path = require("path");
 const cloudinary = require("cloudinary").v2;
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 require("dotenv").config();
 
@@ -41,6 +36,11 @@ app.use(cors());
 //   database: "testdb",
 // });
 
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 const db = mysql.createPool({
   // ใช้ Connection URL ที่มาจาก Environment Variable
   uri: process.env.DATABASE_URL, // บังคับใช้ SSL/TLS ตามที่ TiDB Cloud กำหนด
@@ -941,7 +941,7 @@ app.post("/api/getmenu", async (req, res) => {
 app.post("/api/addmenu", upload.single("image"), async (req, res) => {
   const { menuname, price } = req.body;
 
-  console.log("FILE:", req.file);
+  console.log(JSON.stringify(req.file, null, 2));
 
   if (!menuname || !price) {
     return res.status(400).json({ message: "menuname and price required" });
