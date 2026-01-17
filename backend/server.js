@@ -1,3 +1,6 @@
+const fs = require("fs");
+const axios = require("axios");
+const FormData = require("form-data");
 const express = require("express");
 const mysql = require("mysql2/promise");
 const cors = require("cors");
@@ -63,6 +66,10 @@ const REMOVE_BG_API = "q8V1NnscArhuwznDPoMFeFWc";
 
 app.post("/api/upload", upload.single("image"), async (req, res) => {
   try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
     const inputPath = req.file.path; // รูปต้นฉบับ
     const outputPath = `uploads/no-bg-${req.file.filename}`; // รูปพื้นหลังลบแล้ว
 
@@ -71,16 +78,17 @@ app.post("/api/upload", upload.single("image"), async (req, res) => {
     formData.append("size", "auto");
     formData.append("image_file", fs.createReadStream(inputPath));
 
-    const result = await axios({
-      method: "post",
-      url: "https://api.remove.bg/v1.0/removebg",
-      data: formData,
-      responseType: "arraybuffer",
-      headers: {
-        ...formData.getHeaders(),
-        "X-Api-Key": REMOVE_BG_API,
+    const result = await axios.post(
+      "https://api.remove.bg/v1.0/removebg",
+      formData,
+      {
+        responseType: "arraybuffer",
+        headers: {
+          ...formData.getHeaders(),
+          "X-Api-Key": process.env.REMOVE_BG_API,
+        },
       },
-    });
+    );
 
     // เซฟไฟล์ผลลัพธ์ลงโฟลเดอร์ uploads/
     fs.writeFileSync(outputPath, result.data);
@@ -91,8 +99,8 @@ app.post("/api/upload", upload.single("image"), async (req, res) => {
       image: `no-bg-${req.file.filename}`,
     });
   } catch (error) {
-    console.error("Remove BG Error:", error.response?.data || error.message);
-    res.status(500).json({ success: false });
+    console.error("Remove BG Error:", error.response?.data?.toString() || error.message);
+    res.status(500).json({ success: false, message: "Remove BG failed" });
   }
 });
 
@@ -1408,7 +1416,7 @@ app.patch("/api/completeTableOrders", async (req, res) => {
 app.get("/api/takeaway", async (req, res) => {
   try {
     const [rows] = await db.query(
-      "SELECT tablenum FROM listorder WHERE tablenum LIKE 'T%' ORDER BY tablenum DESC LIMIT 1"
+      "SELECT tablenum FROM listorder WHERE tablenum LIKE 'T%' ORDER BY tablenum DESC LIMIT 1",
     );
 
     let newCode = "T001";
