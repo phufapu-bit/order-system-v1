@@ -20,12 +20,15 @@ export default function Login() {
         title: "กรอกข้อมูลให้ครบ",
       });
     }
+
+    setLoading(true);
+
     try {
       const response = await axios.post(`${API_URL}/login`, {
         name,
         password,
       });
-      setLoading(true);
+
       if (response.data.success) {
         Swal.fire({
           title: "คุณต้องการเข้าสู่ระบบใช่ไหม?",
@@ -33,24 +36,23 @@ export default function Login() {
           showCancelButton: true,
           confirmButtonText: "ใช่",
           cancelButtonText: "ไม่",
-        }).then((result) => {
-          if (result.isConfirmed) {
-            localStorage.setItem("isLoggedIn", "true");
-            localStorage.setItem("name", name);
-            // Save the user's role in localStorage for later use
-            localStorage.setItem("role", response.data.role);
-            // **สำคัญ: ลบ guest_tablenum ออกเพื่อให้ถือเป็น Admin/User**
-            localStorage.removeItem("guest_tablenum");
-            window.dispatchEvent(new Event("storage"));
-
-            Swal.fire({
-              icon: "success",
-              title: "Login สำเร็จ!",
-              timer: 1500,
-              showConfirmButton: false,
-            }).then(() => navigate("/")); // นำทางไปหน้าหลัก (Dashboard/Resultpage)
-          }
         });
+        if (result.isConfirmed) {
+          localStorage.setItem("isLoggedIn", "true");
+          localStorage.setItem("name", name);
+          localStorage.setItem("role", response.data.role);
+          localStorage.removeItem("guest_tablenum");
+
+          window.dispatchEvent(new Event("storage"));
+
+          await Swal.fire({
+            icon: "success",
+            title: "Login สำเร็จ!",
+            timer: 1500,
+            showConfirmButton: false,
+          });
+          navigate("/"); // นำทางไปหน้าหลัก (Dashboard/Resultpage)
+        }
       } else {
         Swal.fire({
           icon: "error",
@@ -64,6 +66,8 @@ export default function Login() {
         title: "เกิดข้อผิดพลาด",
         text: "ไม่สามารถเชื่อมต่อ Server ได้",
       });
+    }finally{
+      setLoading(false);
     }
   };
 
