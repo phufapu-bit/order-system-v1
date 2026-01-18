@@ -4,6 +4,7 @@ import {
   Routes,
   Route,
   useLocation,
+  Navigate,
 } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/sidebar";
@@ -15,6 +16,7 @@ import Orderpage from "./pages/Order";
 import Footer from "./components/footer";
 import Menupage from "./pages/Menu";
 import EditUserpage from "./pages/EditUser";
+import DemoEntry from "./login/DemoEntry";
 
 function MainApp() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -24,6 +26,16 @@ function MainApp() {
 
   const contentMargin = isLoginPage ? "0" : sidebarOpen ? "300px" : "0";
   const contentPaddingTop = isLoginPage ? "0" : "70px"; // Padding-top สำหรับเว้นพื้นที่ Navbar
+
+  const DemoRoute = ({ children }) => {
+    const isDemo = localStorage.getItem("guest_tablenum") === "DEMO";
+
+    if (isDemo && window.location.pathname !== "/Orderpage") {
+      return <Navigate to="/Orderpage" replace />;
+    }
+
+    return children;
+  };
 
   return (
     <>
@@ -37,7 +49,7 @@ function MainApp() {
           transition: "margin-left 0.3s ease",
           display: "flex",
           flexDirection: "column",
-          minHeight: "100vh", 
+          minHeight: "100vh",
         }}
       >
         {!isLoginPage && (
@@ -46,7 +58,15 @@ function MainApp() {
 
         <div style={{ flex: 1, paddingTop: contentPaddingTop }}>
           <Routes>
-            <Route path="/login" element={<Login />} />
+            <Route path="/demo" element={<DemoEntry />} />
+            <Route
+              path="/login"
+              element={
+                <DemoRoute>
+                  <Login />
+                </DemoRoute>
+              }
+            />
             <Route
               path="/"
               element={

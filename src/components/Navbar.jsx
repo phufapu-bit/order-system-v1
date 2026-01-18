@@ -22,6 +22,17 @@ export default function Navbar({ toggleSidebar }) {
   }, []);
 
   const handleLogout = () => {
+    const isDemo = localStorage.getItem("guest_tablenum") === "DEMO";
+
+    if (isDemo) {
+      Swal.fire({
+        icon: "info",
+        title: "โหมดตัวอย่าง",
+        text: "โหมด Demo ไม่สามารถออกจากระบบได้",
+        confirmButtonText: "ตกลง",
+      });
+      return;
+    }
     Swal.fire({
       title: "คุณต้องการออกจากระบบ?",
       icon: "warning",
@@ -78,7 +89,7 @@ export default function Navbar({ toggleSidebar }) {
               style={{
                 fontFamily: "'Kanit', sans-serif",
                 letterSpacing: "0.5px",
-                fontSize:"20px"
+                fontSize: "20px",
               }}
             >
               {username}
@@ -102,7 +113,7 @@ export default function Navbar({ toggleSidebar }) {
             style={{
               fontFamily: "'Kanit', sans-serif",
               letterSpacing: "0.5px",
-              fontSize:"20px"
+              fontSize: "20px",
             }}
           >
             เข้าสู่ระบบ

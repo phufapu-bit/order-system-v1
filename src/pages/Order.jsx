@@ -5,6 +5,7 @@ import withReactContent from "sweetalert2-react-content";
 import Select from "react-select";
 import axios from "axios";
 import "../App.css";
+import { API_URL } from "../config/api"
 import { QRCodeCanvas } from "qrcode.react";
 import generatePayload from "promptpay-qr";
 import AddIcon from "../assets/images/plus.png";
@@ -13,7 +14,6 @@ import editIcon from "../assets/images/edit.png";
 export default function Orderpage() {
   const [tablenum, setTablenum] = useState("");
   const [takeawayInput, setTakeawayInput] = useState(""); // State สำหรับรหัสออเดอร์กลับบ้านที่ไม่ซ้ำกัน
-  const [takeawayCounter, setTakeawayCounter] = useState(1);
   const [filterTableNum, setFilterTableNum] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -29,10 +29,13 @@ export default function Orderpage() {
   const [isEditing, setIsEditing] = useState(false);
   const [isGuest, setIsGuest] = useState(false);
   const [isTakeaway, setIsTakeaway] = useState(false);
+
   const navigate = useNavigate();
   const ROLE = localStorage.getItem("role");
   const guestTablenum = localStorage.getItem("guest_tablenum");
-  const API_URL = "https://order-system-v1.onrender.com/api";
+
+  const isDemo = localStorage.getItem("guest_tablenum") === "DEMO";
+
 
   const calculatePrice = (menuName, qty) => {
     const menu = menuList.find((m) => m.ordername === menuName);
@@ -93,8 +96,6 @@ export default function Orderpage() {
 
   const fetchMenuData = async () => {
     try {
-      // `${API_URL}/getmenu`
-      // "http://localhost:3001/api/getmenu"
       const res = await axios.post(`${API_URL}/getmenu`);
       if (res.data.success) {
         setMenuList(res.data.menu);
@@ -112,8 +113,6 @@ export default function Orderpage() {
   // ดึงข้อมูลออเดอร์
   const getListorder = async () => {
     try {
-      // `${API_URL}/getorder`
-      // "http://localhost:3001/api/getorder"
       const res = await axios.post(`${API_URL}/getorder`);
       if (res.data.success) {
         setOrders(res.data.orders);
@@ -123,42 +122,13 @@ export default function Orderpage() {
     }
   };
 
-  // const generateNextTakeawayId = (currentCounter) => {
-  //   // Format the number with leading zeros (e.g., TW-1)
-  //   const formattedNumber = String(currentCounter).padStart(0, "0");
-  //   return `TW-${formattedNumber}`;
-  // };
-
-  // //จัดการการเปลี่ยนแปลงสถานะ Takeaway
-  // const handleTakeawayToggle = (e) => {
-  //   const isChecked = e.target.checked;
-  //   setIsTakeaway(isChecked);
-
-  //   if (isChecked) {
-  //     setTablenum("");
-  //     const newId = generateNextTakeawayId(takeawayCounter);
-  //     setTakeawayInput(newId);
-  //   }
-  //   // ถ้าเปลี่ยนกลับ และไม่ใช่ Guest ที่มี tablenum อยู่แล้ว ให้ล้างเลขโต๊ะ
-  //   else {
-  //     setTablenum("");
-  //     setTakeawayInput("");
-  //   }
-  // };
-
   const handleTakeawayToggle = async (e) => {
     const isChecked = e.target.checked;
     setIsTakeaway(isChecked);
     if (isChecked) {
       setTablenum("");
-
-      // เรียก API จาก backend เพื่อขอรหัสล่าสุด
-      // "http://localhost:3001/api/takeaway"
-      // `${API_URL}/takeaway`
       try {
         const res = await axios.get(`${API_URL}/takeaway`);
-        // const data = await res.json();
-
         setTakeawayInput(res.data.code); // เช่น T005
       } catch (err) {
         console.error("Error fetch takeaway number:", err);
@@ -190,6 +160,10 @@ export default function Orderpage() {
 
   //  ฟังก์ชันเพิ่มลงตะกร้า (Add to Cart)
   const handleAddToCart = () => {
+    if (isDemo) {
+      Swal.fire("โหมดตัวอย่าง", "ไม่สามารถแก้ไขข้อมูลได้", "warning");
+      return;
+    }
     //  ตรวจสอบว่าต้องมี tablenum หรือเป็น Takeaway
     if (!listorder || !qty) {
       return Swal.fire({
@@ -255,6 +229,10 @@ export default function Orderpage() {
 
   //ฟังก์ชันยืนยันการสั่งซื้อทั้งหมด
   const handleConfirmOrder = async () => {
+    if (isDemo) {
+      Swal.fire("โหมดตัวอย่าง", "ไม่สามารถแก้ไขข้อมูลได้", "warning");
+      return;
+    }
     if (cart.length === 0) return;
 
     //การจัดการ Guest Session: ไม่ควรเซ็ต/เคลียร์ guest_tablenum ถ้าเป็น Takeaway
@@ -265,8 +243,6 @@ export default function Orderpage() {
     try {
       // วนลูปส่งรายการในตะกร้าไป Backend ทีละรายการ
       for (const item of cart) {
-        // `${API_URL}/order`
-        // "http://localhost:3001/api/order"
         await axios.post(`${API_URL}/order`, item);
       }
 
@@ -276,10 +252,6 @@ export default function Orderpage() {
         timer: 1200,
         showConfirmButton: false,
       }).then(() => {
-        // if (isTakeaway) {
-        //   setTakeawayCounter((prev) => prev + 1);
-        // }
-
         setCart([]); // ล้างตะกร้าเมื่อสั่งซื้อสำเร็จ
         getListorder(); // รีเฟรชรายการออเดอร์ในตารางด้านล่าง
 
@@ -303,6 +275,10 @@ export default function Orderpage() {
 
   //ฟังก์ชันดึงข้อมูลไปแก้ไข (ใช้สำหรับทั้ง orders และ cart)
   const handleEdit = (item, index = null) => {
+    if (isDemo) {
+      Swal.fire("โหมดตัวอย่าง", "ไม่สามารถแก้ไขข้อมูลได้", "warning");
+      return;
+    }
     const isTakeawayOrder =
       typeof item.tablenum === "string" && item.tablenum.startsWith("T");
     setId(item.id || null); // id จะมีค่าเฉพาะถ้ามาจากตาราง orders
@@ -321,8 +297,12 @@ export default function Orderpage() {
     setCartIndexToEdit(index);
   };
 
-  // 🟢 ฟังก์ชันอัปเดตรายการในตะกร้า
+  //  ฟังก์ชันอัปเดตรายการในตะกร้า
   const handleUpdateCartItem = () => {
+    if (isDemo) {
+      Swal.fire("โหมดตัวอย่าง", "ไม่สามารถแก้ไขข้อมูลได้", "warning");
+      return;
+    }
     if (!listorder || !qty || cartIndexToEdit === null) {
       return Swal.fire({
         icon: "warning",
@@ -372,6 +352,10 @@ export default function Orderpage() {
   };
 
   const handleUpdateOrder = async () => {
+    if (isDemo) {
+      Swal.fire("โหมดตัวอย่าง", "ไม่สามารถแก้ไขข้อมูลได้", "warning");
+      return;
+    }
     // การแก้ไขรายการใน DB จะยังคงใช้ tablenum ที่ถูกดึงมาตอนแรก
     if (cartIndexToEdit !== null || !id) return;
     if (isTakeaway && !takeawayInput) {
@@ -398,8 +382,6 @@ export default function Orderpage() {
         const finalTablenum = isTakeaway
           ? takeawayInput.toUpperCase()
           : tablenum;
-        // `${API_URL}/updateOrder`
-        // "http://localhost:3001/api/updateOrder"
         const response = await axios.patch(`${API_URL}/updateOrder`, {
           id, // id นี้คือ id ของรายการใน Database (orders)
           tablenum: finalTablenum,
@@ -432,6 +414,10 @@ export default function Orderpage() {
 
   // ลบออเดอร์
   const handleDelete = (id) => {
+    if (isDemo) {
+      Swal.fire("โหมดตัวอย่าง", "ไม่สามารถแก้ไขข้อมูลได้", "warning");
+      return;
+    }
     Swal.fire({
       title: "คุณต้องการลบออเดอร์นี้หรือไม่?",
       icon: "warning",
@@ -441,8 +427,6 @@ export default function Orderpage() {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          // `${API_URL}/deleteOrder/${id}`
-          // `http://localhost:3001/api/deleteOrder/${id}`
           await axios.delete(`${API_URL}/deleteOrder/${id}`);
           setOrders(orders.filter((o) => o.id !== id));
           Swal.fire({
@@ -464,6 +448,10 @@ export default function Orderpage() {
   };
 
   const handleDone = async (id) => {
+    if (isDemo) {
+      Swal.fire("โหมดตัวอย่าง", "ไม่สามารถแก้ไขข้อมูลได้", "warning");
+      return;
+    }
     Swal.fire({
       title: "รายการนี้ทำเสร็จแล้วใช่หรือไม่?",
       text: "สถานะจะเปลี่ยนเป็น 'Done' (พร้อมชำระเงิน)",
@@ -473,8 +461,6 @@ export default function Orderpage() {
       cancelButtonText: "ยกเลิก",
     }).then(async (result) => {
       if (result.isConfirmed) {
-        // "http://localhost:3001/api/doneOrder"
-        // `${API_URL}/doneOrder`
         try {
           const response = await axios.patch(`${API_URL}/doneOrder`, {
             id,
@@ -569,8 +555,7 @@ export default function Orderpage() {
       cancelButtonText: "ยกเลิก",
     }).then(async (result) => {
       if (result.isConfirmed) {
-        // `${API_URL}/completeTableOrders`
-        // "http://localhost:3001/api/completeTableOrders"
+        speakThai(`ชำระเงิน ${tableSummary.totalAmount} บาท`);
         try {
           const response = await axios.patch(`${API_URL}/completeTableOrders`, {
             tablenum: tablenum,
@@ -604,7 +589,7 @@ export default function Orderpage() {
   const MySwal = withReactContent(Swal);
 
   const openQRModal = (tableSummary) => {
-    const payload = generatePayload("0890879552", {
+    const payload = generatePayload("", {  //ใส่หมายเลขพร้อมเพย์
       amount: tableSummary.totalAmount,
     });
 
@@ -664,33 +649,6 @@ export default function Orderpage() {
     }
   }, []);
 
-  // const incompleteOrders = orders.filter(
-  //   (order) => order.status !== "completed",
-  // );
-
-  // const tablesToPayMap = incompleteOrders.reduce((acc, order) => {
-  //   const tableKey = order.tablenum;
-  //   if (!acc[tableKey]) {
-  //     acc[tableKey] = {
-  //       tablenum: tableKey,
-  //       totalAmount: 0,
-  //       items: [],
-  //     };
-  //   }
-  //   const totalPrice = parseFloat(order.total_price) || 0;
-  //   const pricePerUnit = parseFloat(order.price) || 0;
-
-  //   acc[tableKey].totalAmount += totalPrice;
-  //   acc[tableKey].items.push({
-  //     listorder: order.listorder,
-  //     qty: order.qty,
-  //     price: pricePerUnit,
-  //   });
-  //   return acc;
-  // }, {});
-
-  // const tablesToPay = Object.values(tablesToPayMap);
-
   const sortedOrders = [...filteredOrders].sort((a, b) => {
     // Priority 1: Completed status moves to the bottom
     if (a.status === "completed" && b.status !== "completed") return 1;
@@ -729,11 +687,27 @@ export default function Orderpage() {
 
   const tablesToPay = Object.values(tablesToPayMap);
 
+  useEffect(() => {
+    const isDemo = localStorage.getItem("guest_tablenum") === "DEMO";
+    if (!isDemo) return;
+
+    // ดัน history 1 ครั้ง
+    window.history.pushState(null, "", window.location.href);
+
+    const handlePopState = () => {
+      window.history.pushState(null, "", window.location.href);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [navigate]);
+
   return (
     <>
       <div className="container">
-        {/* container-fluid */}
-        {/* Breadcrumb */}
         <div
           className="card shadow-lg mt-0 m-2"
           style={{
@@ -950,7 +924,7 @@ export default function Orderpage() {
             </div>
           )}
 
-          {/* 👉 ส่วน body ของ card ใส่ฟอร์มด้านล่างต่อได้เลย */}
+          {/*  ส่วน body ของ card  */}
           <div
             className="card-body mt-4"
             style={{ fontFamily: "'Kanit', sans-serif" }}
@@ -1193,16 +1167,13 @@ export default function Orderpage() {
                             justifyContent: "center",
                           }}
                         >
-                          {/* `${API_URL}/uploads/${item.image}` */}
-                          {/* `http://localhost:3001/uploads/${item.image}` */}
                           <img
                             src={item.image}
                             alt={item.ordername}
                             style={{
                               width: "100%",
                               height: "100%",
-                              objectFit: "contain", // ⭐ สวยสุด
-                              // pointerEvents: "none",
+                              objectFit: "contain", 
                             }}
                           />
                         </div>
@@ -1219,20 +1190,21 @@ export default function Orderpage() {
               </div>
             </div>
 
-            <div
-              className="card-body"
-              style={{ fontFamily: "'Kanit', sans-serif" }}
-            >
+            {(ROLE === "admin" || ROLE === "user") && (
               <div
-                className="card p-4 mb-4 shadow"
-                style={{
-                  borderRadius: "20px",
-                  background:
-                    "linear-gradient(135deg, #ffffff 0%, #f7f7f7 100%)",
-                }}
+                className="card-body"
+                style={{ fontFamily: "'Kanit', sans-serif" }}
               >
-                {/* ตารางแสดงออเดอร์ */}
-                {(ROLE === "admin" || ROLE === "user") && (
+                <div
+                  className="card p-4 mb-4 shadow"
+                  style={{
+                    borderRadius: "20px",
+                    background:
+                      "linear-gradient(135deg, #ffffff 0%, #f7f7f7 100%)",
+                  }}
+                >
+                  {/* ตารางแสดงออเดอร์ */}
+
                   <div className="table-container">
                     <table
                       className="table table-bordered table-striped mb-0"
@@ -1389,7 +1361,7 @@ export default function Orderpage() {
                                 <td>
                                   <span
                                     className={
-                                      order.tablenum.startsWith("TW-") ||
+                                      order.tablenum.startsWith("T") ||
                                       order.tablenum.includes("-")
                                         ? "fw-bold text-primary"
                                         : ""
@@ -1470,9 +1442,9 @@ export default function Orderpage() {
                       </tbody>
                     </table>
                   </div>
-                )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

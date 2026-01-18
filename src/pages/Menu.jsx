@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
 import axios from "axios";
 import "../App.css";
+import { API_URL } from "../config/api"
 import LoadingOverlay from "../components/LoadingOverlay";
 
 export default function Menupage() {
@@ -20,12 +21,9 @@ export default function Menupage() {
   const fileInputRef = useRef(null);
   const nameInputRef = useRef(null);
 
-  const API_URL = "https://order-system-v1.onrender.com/api";
 
   // ฟังก์ชันดึงเมนู
   const getMenuList = async () => {
-    // `${API_URL}/getmenu`
-    // "http://localhost:3001/api/getmenu"
     try {
       const res = await axios.post(`${API_URL}/getmenu`);
       if (res.data.success) {
@@ -40,16 +38,6 @@ export default function Menupage() {
       });
     }
   };
-
-  // const handleUpload = async () => {
-  //   const formData = new FormData();
-  //   formData.append("image", image); // image = file ที่เลือกจาก input
-  //   // ("http://localhost:3001/upload");
-  //   const res = await axios.post(`${API_URL}/upload`, formData,
-  //     { headers: { "Content-Type": "multipart/form-data" } }
-  //   );
-  //   // return res.data.image;
-  // };
 
   // ฟังก์เพิ่มเมนู
   const handleAddMenu = async () => {
@@ -66,7 +54,7 @@ export default function Menupage() {
       const formData = new FormData();
       formData.append("menuname", menuname);
       formData.append("price", price);
-      formData.append("image", image); // 🔥 ส่งไฟล์จริง
+      formData.append("image", image); // ส่งไฟล์จริง
 
       await axios.post(`${API_URL}/addmenu`, formData);
 
@@ -137,9 +125,9 @@ export default function Menupage() {
       formData.append("price", price);
 
       if (image instanceof File) {
-        formData.append("image", image); // 🔥 ไฟล์ใหม่
+        formData.append("image", image); // ไฟล์ใหม่
       } else {
-        formData.append("image_old", image); // 🔥 ชื่อไฟล์เดิม
+        formData.append("image_old", image); // ชื่อไฟล์เดิม
       }
 
       await axios.patch(`${API_URL}/updatemenu`, formData, {
@@ -177,8 +165,6 @@ export default function Menupage() {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          // `${API_URL}/deletemenu/${id}`
-          // `http://localhost:3001/api/deletemenu/${id}`
           await axios.delete(`${API_URL}/deletemenu/${id}`);
           setMenuList(menuList.filter((menu) => menu.id !== id));
           Swal.fire({
@@ -354,15 +340,8 @@ export default function Menupage() {
                 }}
                 onClick={() => setShowImageModal(false)}
               >
-                {/* `${API_URL}/uploads/${image}` */}
-                {/* `http://localhost:3001/uploads/${image}` */}
                 <img
-                  src={
-                    // image instanceof File
-                    //   ? URL.createObjectURL(image)
-                    //   : // : `${API_URL}${image}`
-                    image
-                  }
+                  src={image}
                   alt="old"
                   style={{
                     maxHeight: "80%",
@@ -458,7 +437,6 @@ export default function Menupage() {
           </div>
 
           {/* เมนูทั้งหมด */}
-
           <div
             className="row g-4"
             style={{
@@ -475,10 +453,7 @@ export default function Menupage() {
                     className="card shadow-lg"
                     style={{ borderRadius: "20px", overflow: "hidden" }}
                   >
-                    {/* `${API_URL}/uploads/${menu.image}` */}
-                    {/* `http://localhost:3001/uploads/${menu.image}` */}
                     <img
-                      // src={`${API_URL}${menu.image}`}
                       src={menu.image}
                       alt={menu.ordername}
                       className="card-img-top"

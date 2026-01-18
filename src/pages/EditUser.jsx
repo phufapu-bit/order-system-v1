@@ -4,6 +4,7 @@ import Swal from "sweetalert2";
 import axios from "axios";
 import Select from "react-select";
 import "../App.css";
+import { API_URL } from "../config/api"
 
 export default function EditUserpage() {
   const [editName, setEditName] = useState("");
@@ -16,7 +17,6 @@ export default function EditUserpage() {
   const [users, setUsers] = useState([]);
   const [showPassword, setShowPassword] = useState(false);
 
-  const API_URL = "https://order-system-v1.onrender.com/api";
 
   const roleOptions = [
     { value: "user", label: "พนักงาน" },
@@ -26,8 +26,6 @@ export default function EditUserpage() {
   //ฟังก์ดึงชื่อผู้ใช้งาน
   const getuser = async () => {
     try {
-      // `${API_URL}/getuser`
-      // "http://localhost:3001/api/getuser"
       const res = await axios.post(`${API_URL}/getuser`);
       if (res.data.success && Array.isArray(res.data.users)) {
         setUsers(res.data.users);
@@ -54,8 +52,7 @@ export default function EditUserpage() {
         title: "กรอกข้อมูลให้ครบ",
       });
     }
-    // `${API_URL}/register`
-    // "http://localhost:3001/api/register"
+
     try {
       const response = await axios.post(`${API_URL}/register`, {
         name,
@@ -106,8 +103,6 @@ export default function EditUserpage() {
     if (modalInstance) {
       modalInstance.hide();
     }
-    // ไม่ต้อง setAdduser(null) เพราะตอนนี้ใช้ state name, password, role ควบคุมฟอร์ม
-    // แต่ควรล้างค่าฟอร์มด้วย setName(""), setPassword(""), setRole(null) หลังการลงทะเบียน
   };
 
   // --- ฟังก์ชันสำหรับจัดการการแก้ไข Modal ---
@@ -172,8 +167,6 @@ export default function EditUserpage() {
     }
     const oldName = editingUser.name;
     try {
-      // `${API_URL}/updateProfileByAdmin/${oldName}`
-      // `http://localhost:3001/api/updateProfileByAdmin/${oldName}`
       const response = await axios.patch(
         `${API_URL}/updateProfileByAdmin/${oldName}`,
         {
@@ -213,8 +206,6 @@ export default function EditUserpage() {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          // `${API_URL}/deleteuser/${id}`
-          // `http://localhost:3001/api/deleteuser/${id}`
           const res = await axios.delete(`${API_URL}/deleteuser/${id}`);
           if (res.data.success) {
             Swal.fire("ลบสำเร็จ!", res.data.message, "success");

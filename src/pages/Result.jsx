@@ -17,6 +17,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { API_URL } from "../config/api";
 
 export default function Resultpage() {
   const [salesData, setSalesData] = useState([]);
@@ -31,7 +32,6 @@ export default function Resultpage() {
   const [endDate, setEndDate] = useState("");
   const isAdminOrUser = localStorage.getItem("role");
   const guestTablenum = localStorage.getItem("guest_tablenum");
-  const API_URL = "https://order-system-v1.onrender.com/api";
 
   // ฟังก์ชันจัดรูปแบบวันที่สำหรับแกน X และ Tooltip (เหมือนเดิม)
   const dateFormatter = (tickItem) => {
@@ -103,7 +103,7 @@ export default function Resultpage() {
       if (res.data.success) {
         setSalesData(res.data.salesData);
         setFilteredSalesData(
-          filterSalesData(res.data.salesData, startDate, endDate)
+          filterSalesData(res.data.salesData, startDate, endDate),
         );
       }
     } catch (error) {
@@ -118,7 +118,7 @@ export default function Resultpage() {
     // `http://localhost:3001/api/guestOrders?tablenum=${tablenum}`
     try {
       const res = await axios.get(
-        `${API_URL}/guestOrders?tablenum=${tablenum}`
+        `${API_URL}/guestOrders?tablenum=${tablenum}`,
       );
       if (res.data.success) {
         setGuestOrders(res.data.data || res.data.orders || []);
@@ -157,7 +157,7 @@ export default function Resultpage() {
 
     // ตั้งชื่อไฟล์ตามช่วงวันที่หากมีการกรอง
     let filename = `ยอดขายรายวัน_${new Date().toLocaleDateString(
-      "th-TH"
+      "th-TH",
     )}.xlsx`;
     if (startDate && endDate) {
       filename = `ยอดขาย_${startDate}_ถึง_${endDate}.xlsx`;
