@@ -1,25 +1,24 @@
-const fs = require("fs");
-const axios = require("axios");
-const FormData = require("form-data");
 const express = require("express");
 const mysql = require("mysql2/promise");
 const cors = require("cors");
-const bodyParser = require("body-parser");
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
 const multer = require("multer");
-const path = require("path");
 const cloudinary = require("cloudinary").v2;
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 require("dotenv").config();
-const streamifier = require("streamifier");
 
 const app = express();
-// const PORT = 3001;
 const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 const upload = multer({
   storage: multer.memoryStorage(), // ใช้กับ Cloudinary
@@ -49,11 +48,7 @@ const uploadToCloudinary = (buffer) => {
   });
 };
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+
 const db = mysql.createPool({
   // ใช้ Connection URL ที่มาจาก Environment Variable
   uri: process.env.DATABASE_URL, // บังคับใช้ SSL/TLS ตามที่ TiDB Cloud กำหนด
@@ -62,24 +57,6 @@ const db = mysql.createPool({
   }, // ระบุชื่อ Database/Schema ที่ถูกต้อง
   database: "test",
 });
-
-const storage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: "menus",
-    resource_type: "image",
-    format: async (req, file) => "jpg", // หรือไม่ใส่ก็ได้
-    public_id: (req, file) =>
-      Date.now() + "-" + file.originalname.split(".")[0],
-  },
-});
-
-// const upload = multer({
-//   storage: multer.memoryStorage(),
-// });
-
-// const REMOVE_BG_API = "q8V1NnscArhuwznDPoMFeFWc";
-// const REMOVE_BG_API = process.env.REMOVE_BG_API;
 
 // Start the server only after a successful database connection
 (async function startServer() {
@@ -342,11 +319,11 @@ app.post("/api/order", async (req, res) => {
     });
   }
   try {
-    // 1. หา ID ที่มากที่สุดในปัจจุบัน (หรือ 0 ถ้าไม่มีข้อมูลเลย)
+
     const [maxIdResult] = await db.query(
       "SELECT MAX(id) AS max_id FROM test.listorder",
     );
-    const newId = (maxIdResult[0].max_id || 0) + 1; // 2. แก้ไข SQL Query: เพิ่ม 'id' ในคอลัมน์ และเพิ่ม '?' สำหรับค่า id ใหม่
+    const newId = (maxIdResult[0].max_id || 0) + 1; 
     const sql =
       "INSERT INTO test.listorder (id, tablenum, listorder, qty, price, total_price, status,update_status,create_at,update_at) VALUES (?, ?, ?, ?, ?, ?, 'pending',CURRENT_TIMESTAMP(),NOW(),CURRENT_TIMESTAMP())"; // 3. แก้ไข Array ของค่า: เพิ่ม newId เป็นค่าแรก
     const [results] = await db.query(sql, [
@@ -412,8 +389,7 @@ app.patch("/api/completeOrder", async (req, res) => {
             FROM listorder 
             WHERE tablenum = ? AND status != 'completed' ;
         `;
-    // *หมายเหตุ: ผมเพิ่ม status != 'paid' เข้ามาเผื่อว่าออเดอร์นั้นถูก mark ว่า Paid แล้ว แต่ยังไม่เสร็จสิ้น*
-    // *ถ้า Logic การเก็บข้อมูลของคุณใช้แค่ 'completed' ก็สามารถตัดออกได้*
+
 
     const [remainingRows] = await db.query(checkRemainingSql, [tablenum]);
     const remainingCount = remainingRows[0].remainingOrders;
@@ -478,8 +454,6 @@ app.patch("/api/doneOrder", async (req, res) => {
             FROM listorder 
             WHERE tablenum = ? AND status = 'pending' ;
         `;
-    // *หมายเหตุ: ผมเพิ่ม status != 'paid' เข้ามาเผื่อว่าออเดอร์นั้นถูก mark ว่า Paid แล้ว แต่ยังไม่เสร็จสิ้น*
-    // *ถ้า Logic การเก็บข้อมูลของคุณใช้แค่ 'completed' ก็สามารถตัดออกได้*
 
     const [remainingRows] = await db.query(checkRemainingSql, [tablenum]);
     const remainingCount = remainingRows[0].remainingOrders;
@@ -742,7 +716,7 @@ app.post("/api/getSalesSummary", async (req, res) => {
 ////////////////////TiDB data base///////////////////
 app.post("/api/getDailySales", async (req, res) => {
   try {
-    // 🟢 แก้ไข SQL เพื่อดึงยอดขายแบบรวมตาม 'วันที่' ที่แท้จริง (ตัดเวลาออก)
+    // แก้ไข SQL เพื่อดึงยอดขายแบบรวมตาม 'วันที่' ที่แท้จริง (ตัดเวลาออก)
     const sql = `
         SELECT 
             DATE_FORMAT(update_status, '%Y-%m-%d') AS day, 
@@ -757,7 +731,7 @@ app.post("/api/getDailySales", async (req, res) => {
 
     const [results] = await db.query(sql);
 
-    // ❌ ลบ Logic การ map ชื่อวัน 7 วันทิ้ง
+    //  ลบ Logic การ map ชื่อวัน 7 วันทิ้ง
     // Frontend จะจัดการการแสดงผลจาก update_at โดยตรงแล้ว
     const salesData = results.map((row) => ({
       // ใช้ update_at ที่ถูกจัดรูปแบบแล้วจาก SQL
@@ -787,7 +761,6 @@ app.get("/api/guestOrders", async (req, res) => {
     const sql =
       "SELECT * FROM test.listorder WHERE tablenum = ? AND status != 'completed' ORDER BY create_at DESC";
 
-    // db.query คือ function ที่คุณใช้เชื่อมต่อฐานข้อมูล
     const [results] = await db.query(sql, [tablenum]);
 
     res.json({ success: true, data: results });
