@@ -4,7 +4,7 @@ export default function LoadingOverlay() {
   return (
     <div className="loading-overlay">
       <div className="spinner"></div>
-      <p>กำลังอัปโหลดรูป...</p>
+      <p>รอสักครู่...</p>
     </div>
   );
 }

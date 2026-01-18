@@ -28,7 +28,7 @@ export default function Login() {
         name,
         password,
       });
-
+      
       if (response.data.success) {
         Swal.fire({
           title: "คุณต้องการเข้าสู่ระบบใช่ไหม?",
@@ -36,23 +36,22 @@ export default function Login() {
           showCancelButton: true,
           confirmButtonText: "ใช่",
           cancelButtonText: "ไม่",
+        }).then((result) => {
+          if (result.isConfirmed) {
+            localStorage.setItem("isLoggedIn", "true");
+            localStorage.setItem("name", name);
+            localStorage.setItem("role", response.data.role);
+            localStorage.removeItem("guest_tablenum");
+            window.dispatchEvent(new Event("storage"));
+
+            Swal.fire({
+              icon: "success",
+              title: "Login สำเร็จ!",
+              timer: 1500,
+              showConfirmButton: false,
+            }).then(() => navigate("/")); // นำทางไปหน้าหลัก (Dashboard/Resultpage)
+          }
         });
-        if (result.isConfirmed) {
-          localStorage.setItem("isLoggedIn", "true");
-          localStorage.setItem("name", name);
-          localStorage.setItem("role", response.data.role);
-          localStorage.removeItem("guest_tablenum");
-
-          window.dispatchEvent(new Event("storage"));
-
-          await Swal.fire({
-            icon: "success",
-            title: "Login สำเร็จ!",
-            timer: 1500,
-            showConfirmButton: false,
-          });
-          navigate("/"); // นำทางไปหน้าหลัก (Dashboard/Resultpage)
-        }
       } else {
         Swal.fire({
           icon: "error",
@@ -155,6 +154,7 @@ export default function Login() {
           {loading && <LoadingOverlay />}
           <button
             className="btn btn-success mt-4 w-100"
+            disabled={loading}
             onClick={handleSubmit}
             style={{
               fontFamily: "'Kanit', sans-serif",
