@@ -17,6 +17,7 @@ import Footer from "./components/footer";
 import Menupage from "./pages/Menu";
 import EditUserpage from "./pages/EditUser";
 import DemoEntry from "./login/DemoEntry";
+import ExitDemo from "./login/ExitDemo";
 
 function MainApp() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -59,6 +60,7 @@ function MainApp() {
         <div style={{ flex: 1, paddingTop: contentPaddingTop }}>
           <Routes>
             <Route path="/demo" element={<DemoEntry />} />
+            <Route path="/exit-demo" element={<ExitDemo />} />
             <Route
               path="/login"
               element={
