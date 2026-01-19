@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import Swal from "sweetalert2";
 import axios from "axios";
 import { API_URL } from "../config/api";
-import LoadingOverlay from "../components/LoadingOverlay";
+import LoadingServer from "../components/LoadingServer";
 
 export default function Login() {
   const [name, setName] = useState("");
@@ -151,7 +151,7 @@ export default function Login() {
 
         {/* ปุ่ม Submit */}
         <>
-          {loading && <LoadingOverlay />}
+          {loading && <LoadingServer />}
           <button
             className="btn btn-success mt-4 w-100"
             disabled={loading}
