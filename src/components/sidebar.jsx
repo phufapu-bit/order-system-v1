@@ -20,7 +20,7 @@ export default function Sidebar({ isOpen }) {
     } else {
       setIsGuest(false);
     }
-  }, []);
+  }, [ROLE, guestTablenum]);
 
   return (
     <div

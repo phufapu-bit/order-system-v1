@@ -68,8 +68,6 @@ export default function Resultpage() {
   };
 
   const fetchSalesSummary = async () => {
-    // `${API_URL}/getSalesSummary`
-    // "http://localhost:3001/api/getSalesSummary"
     try {
       const res = await axios.post(`${API_URL}/getSalesSummary`);
       if (res.data.success) {
@@ -83,8 +81,6 @@ export default function Resultpage() {
   };
 
   const fetchPendingCount = async () => {
-    // `${API_URL}/getPendingOrderCount`
-    // "http://localhost:3001/api/getPendingOrderCount"
     try {
       const res = await axios.post(`${API_URL}/getPendingOrderCount`);
       if (res.data.success) {
@@ -96,8 +92,6 @@ export default function Resultpage() {
   };
 
   const fetchSalesData = async () => {
-    // `${API_URL}/getDailySales`
-    // "http://localhost:3001/api/getDailySales"
     try {
       const res = await axios.post(`${API_URL}/getDailySales`);
       if (res.data.success) {
@@ -114,8 +108,6 @@ export default function Resultpage() {
   };
 
   const fetchGuestOrder = async (tablenum) => {
-    // `${API_URL}/guestOrders?tablenum=${tablenum}`
-    // `http://localhost:3001/api/guestOrders?tablenum=${tablenum}`
     try {
       const res = await axios.get(
         `${API_URL}/guestOrders?tablenum=${tablenum}`,
@@ -190,11 +182,9 @@ export default function Resultpage() {
   }, [isAdminOrUser, guestTablenum]);
 
   useEffect(() => {
-    // ตรวจสอบว่าเป็นโหมด Admin/User และมีข้อมูล salesData
     if (isAdminOrUser && salesData.length > 0) {
       setFilteredSalesData(filterSalesData(salesData, startDate, endDate));
     } else if (isAdminOrUser && salesData.length === 0) {
-      // กรณีข้อมูลว่าง ให้เคลียร์ filtered data ด้วย
       setFilteredSalesData([]);
     }
   }, [startDate, endDate, salesData, isAdminOrUser]);

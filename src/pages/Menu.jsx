@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
 import axios from "axios";
 import "../App.css";
-import { API_URL } from "../config/api"
+import { API_URL } from "../config/api";
 import LoadingOverlay from "../components/LoadingOverlay";
 
 export default function Menupage() {
@@ -17,13 +17,21 @@ export default function Menupage() {
   const [image, setImage] = useState(null);
   const [showImageModal, setShowImageModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [menuLoading, setMenuLoading] = useState(true);
 
   const fileInputRef = useRef(null);
   const nameInputRef = useRef(null);
 
+  const MenuLoading = () => (
+    <div className="d-flex flex-column align-items-center justify-content-center py-5">
+      <div className="spinner-border text-primary mb-3" role="status" />
+      <span>กำลังโหลดเมนู...</span>
+    </div>
+  );
 
   // ฟังก์ชันดึงเมนู
   const getMenuList = async () => {
+    setMenuLoading(true);
     try {
       const res = await axios.post(`${API_URL}/getmenu`);
       if (res.data.success) {
@@ -36,6 +44,8 @@ export default function Menupage() {
         title: "เกิดข้อผิดพลาด",
         text: "ไม่สามารถเชื่อมต่อ Server เพื่อดึงรายการเมนูได้",
       });
+    } finally {
+      setMenuLoading(false);
     }
   };
 
@@ -446,7 +456,9 @@ export default function Menupage() {
               marginTop: "5px",
             }}
           >
-            {menuList.length > 0 ? (
+            {menuLoading ? (
+              <MenuLoading />
+            ) : menuList.length > 0 ? (
               menuList.map((menu) => (
                 <div className="col-md-4" key={menu.id}>
                   <div

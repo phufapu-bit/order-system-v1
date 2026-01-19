@@ -5,7 +5,7 @@ import withReactContent from "sweetalert2-react-content";
 import Select from "react-select";
 import axios from "axios";
 import "../App.css";
-import { API_URL } from "../config/api"
+import { API_URL } from "../config/api";
 import { QRCodeCanvas } from "qrcode.react";
 import generatePayload from "promptpay-qr";
 import AddIcon from "../assets/images/plus.png";
@@ -29,13 +29,13 @@ export default function Orderpage() {
   const [isEditing, setIsEditing] = useState(false);
   const [isGuest, setIsGuest] = useState(false);
   const [isTakeaway, setIsTakeaway] = useState(false);
+  const [menuLoading, setMenuLoading] = useState(true);
 
   const navigate = useNavigate();
   const ROLE = localStorage.getItem("role");
   const guestTablenum = localStorage.getItem("guest_tablenum");
 
   const isDemo = localStorage.getItem("guest_tablenum") === "DEMO";
-
 
   const calculatePrice = (menuName, qty) => {
     const menu = menuList.find((m) => m.ordername === menuName);
@@ -95,6 +95,7 @@ export default function Orderpage() {
   });
 
   const fetchMenuData = async () => {
+    setMenuLoading(true);
     try {
       const res = await axios.post(`${API_URL}/getmenu`);
       if (res.data.success) {
@@ -107,6 +108,8 @@ export default function Orderpage() {
       }
     } catch (error) {
       console.error("Error fetching menu data:", error);
+    } finally {
+      setMenuLoading(false);
     }
   };
 
@@ -589,7 +592,8 @@ export default function Orderpage() {
   const MySwal = withReactContent(Swal);
 
   const openQRModal = (tableSummary) => {
-    const payload = generatePayload("", {  //ใส่หมายเลขพร้อมเพย์
+    const payload = generatePayload("", {
+      //ใส่หมายเลขพร้อมเพย์
       amount: tableSummary.totalAmount,
     });
 
@@ -686,6 +690,13 @@ export default function Orderpage() {
   }, {});
 
   const tablesToPay = Object.values(tablesToPayMap);
+
+  const MenuSpinner = () => (
+    <div className="d-flex flex-column align-items-center justify-content-center py-5">
+      <div className="spinner-border text-primary mb-3" role="status" />
+      <span>กำลังโหลดเมนู...</span>
+    </div>
+  );
 
   useEffect(() => {
     const isDemo = localStorage.getItem("guest_tablenum") === "DEMO";
@@ -1130,63 +1141,67 @@ export default function Orderpage() {
                   marginTop: "10px",
                 }}
               >
-                {menuList.map((item) => {
-                  const isActive = listorder?.value === item.ordername;
+                {menuLoading ? (
+                  <MenuSpinner />
+                ) : (
+                  menuList.map((item) => {
+                    const isActive = listorder?.value === item.ordername;
 
-                  return (
-                    <div
-                      key={item.id}
-                      className="col-12 col-md-6 col-lg-4"
-                      onClick={() =>
-                        setListorder({
-                          value: item.ordername,
-                          label: item.ordername,
-                          price: item.price,
-                          image: item.image,
-                        })
-                      }
-                      style={{ cursor: "pointer" }}
-                    >
+                    return (
                       <div
-                        className={`menu-card h-100 shadow-sm menu-card ${
-                          isActive ? "menu-card-active" : ""
-                        }`}
-                        style={{
-                          borderRadius: "18px",
-                          overflow: "hidden",
-                          transition: "all 0.25s ease",
-                        }}
+                        key={item.id}
+                        className="col-12 col-md-6 col-lg-4"
+                        onClick={() =>
+                          setListorder({
+                            value: item.ordername,
+                            label: item.ordername,
+                            price: item.price,
+                            image: item.image,
+                          })
+                        }
+                        style={{ cursor: "pointer" }}
                       >
-                        {/* รูปอาหาร */}
                         <div
+                          className={`menu-card h-100 shadow-sm menu-card ${
+                            isActive ? "menu-card-active" : ""
+                          }`}
                           style={{
-                            height: "200px",
-                            background: "#f8f9fa",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
+                            borderRadius: "18px",
+                            overflow: "hidden",
+                            transition: "all 0.25s ease",
                           }}
                         >
-                          <img
-                            src={item.image}
-                            alt={item.ordername}
+                          {/* รูปอาหาร */}
+                          <div
                             style={{
-                              width: "100%",
-                              height: "100%",
-                              objectFit: "contain", 
+                              height: "200px",
+                              background: "#f8f9fa",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
                             }}
-                          />
-                        </div>
+                          >
+                            <img
+                              src={item.image}
+                              alt={item.ordername}
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "contain",
+                              }}
+                            />
+                          </div>
 
-                        {/* ข้อมูล */}
-                        <div className="card-body text-center">
-                          <h6 className="fw-bold mb-1">{item.ordername}</h6>
-                          <p className="text-muted mb-0">{item.price} บาท</p>
+                          {/* ข้อมูล */}
+                          <div className="card-body text-center">
+                            <h6 className="fw-bold mb-1">{item.ordername}</h6>
+                            <p className="text-muted mb-0">{item.price} บาท</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                )}
               </div>
             </div>
 
